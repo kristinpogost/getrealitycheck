@@ -30,18 +30,15 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Reality Check - Less delusion, more clarity" },
-      { name: "description", content: "A space to notice patterns, not ignore them.
-No assumptions, just clearer signals." },
+      { name: "description", content: "A space to notice patterns, not ignore them. No assumptions, just clearer signals." },
       { name: "author", content: "Reality Check" },
       { property: "og:title", content: "Reality Check - Less delusion, more clarity" },
-      { property: "og:description", content: "A space to notice patterns, not ignore them.
-No assumptions, just clearer signals." },
+      { property: "og:description", content: "A space to notice patterns, not ignore them. No assumptions, just clearer signals." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Reality Check - Less delusion, more clarity" },
-      { name: "twitter:description", content: "A space to notice patterns, not ignore them.
-No assumptions, just clearer signals." },
+      { name: "twitter:description", content: "A space to notice patterns, not ignore them. No assumptions, just clearer signals." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c66d4c2b-21c7-4bb8-bd95-1fcb65788874/id-preview-0d5e0ab2--50c4dfc0-6042-433d-85d6-bb3ace608b09.lovable.app-1777900540012.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c66d4c2b-21c7-4bb8-bd95-1fcb65788874/id-preview-0d5e0ab2--50c4dfc0-6042-433d-85d6-bb3ace608b09.lovable.app-1777900540012.png" },
     ],
