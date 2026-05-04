@@ -323,7 +323,7 @@ function Index() {
 
         {/* Result */}
         {result && (
-          <section className="mt-8">
+          <section className="mt-16">
             <ResultCards result={result} variant={resultMode} />
           </section>
         )}
