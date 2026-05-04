@@ -12,7 +12,10 @@ export type UiLabels = {
   reflection: string;
   reality_check: string;
   action: string;
+  pattern_over_time?: string;
 };
+
+export type Trend = "improving" | "declining" | "inconsistent" | "stable" | "new";
 
 export type AnalysisResult = {
   language: string;
@@ -27,6 +30,8 @@ export type AnalysisResult = {
   reflection: string;
   reality_check: string;
   action: string;
+  pattern_over_time?: string;
+  trend?: Trend;
   ui_labels: UiLabels;
 };
 
