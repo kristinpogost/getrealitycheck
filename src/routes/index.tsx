@@ -1,49 +1,59 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText } from "lucide-react";
+import {
+  Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText,
+  Plus, ArrowLeft, User,
+} from "lucide-react";
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
 import { FlagBadge } from "@/components/FlagBadge";
+import { TrendBadge } from "@/components/TrendBadge";
+import {
+  loadThreads, saveThreads, createThread, addEntry, latestEntry,
+  type PersonThread, type ThreadEntry, type Mode,
+} from "@/lib/threads";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Mode = "situation" | "message";
-type SavedItem = {
-  id: string;
-  summary: string;
-  flag: string;
-  flag_color: "green" | "yellow" | "red";
-  result: AnalysisResult;
-  createdAt: number;
-  mode: Mode;
-};
-
-const STORAGE_KEY = "reality-check-saved";
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB each
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 const UI = {
-  tagline: "A quiet space to reflect on what's happening — and what it might mean.",
-  modeSituation: "Analyze a situation",
-  modeMessage: "Analyze a message",
+  appTagline: "A quiet space to reflect on what's happening — and what it might mean.",
+  people: "People",
+  newPerson: "New person",
+  noPeople: "No threads yet. Start by adding someone you want to reflect on.",
+  newThreadTitle: "Who is this about?",
+  newThreadHint: "Use a name, nickname, or label — only you see this.",
+  namePlaceholder: "e.g. Alex, M., the new coworker",
+  cancel: "Cancel",
+  start: "Start thread",
+  modeSituation: "Situation",
+  modeMessage: "Message",
   placeholderSituation: "Describe what happened...",
   placeholderMessage: "Paste conversation text or upload screenshots",
+  placeholderContinue: "Continue this situation...",
   uploadHint: "Paste screenshots (Ctrl+V), drag & drop, or upload images",
   uploadSubhint: "PNG, JPG — as many as you need",
   textareaLabelMessage: "If needed, paste the conversation text here for analysis",
   imagesNote: "Interpretation is based on what's visible in your screenshots.",
-  analyze: "Analyze",
+  analyze: "Reflect",
   analyzing: "Reflecting...",
-  savedTitle: "Saved situations",
-  noSaved: "Your saved reflections will appear here.",
-  delete: "Remove",
   empty: "Please share a little more to reflect on.",
   error: "Something went off course. Please try again.",
   disclaimer: "This tool offers reflection, not absolute truth.",
   imageTooLarge: "Image is too large (max 8MB).",
+  lastInteraction: "Last reflection",
+  entries: "entries",
+  entry: "entry",
+  deleteThread: "Delete thread",
+  confirmDelete: "Delete this entire thread? This cannot be undone.",
+  yourEntry: "You",
+  reflection: "Reflection",
+  threadStart: "Thread started",
 };
 
 function formatTime(ts: number) {
@@ -51,7 +61,11 @@ function formatTime(ts: number) {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
-
+function formatDay(ts: number) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -61,28 +75,382 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+type View = { kind: "people" } | { kind: "thread"; id: string };
+
 function Index() {
+  const [threads, setThreads] = useState<PersonThread[]>([]);
+  const [view, setView] = useState<View>({ kind: "people" });
+  const [showNewPerson, setShowNewPerson] = useState(false);
+
+  useEffect(() => { setThreads(loadThreads()); }, []);
+
+  const persist = (next: PersonThread[]) => {
+    setThreads(next);
+    saveThreads(next);
+  };
+
+  const openThread = (id: string) => setView({ kind: "thread", id });
+  const goHome = () => setView({ kind: "people" });
+
+  const handleCreatePerson = (name: string) => {
+    const t = createThread(name);
+    persist([t, ...threads]);
+    setShowNewPerson(false);
+    openThread(t.id);
+  };
+
+  const removeThread = (id: string) => {
+    if (!confirm(UI.confirmDelete)) return;
+    persist(threads.filter((t) => t.id !== id));
+    goHome();
+  };
+
+  const currentThread = view.kind === "thread" ? threads.find((t) => t.id === view.id) : undefined;
+
+  return (
+    <div className="min-h-screen px-4 py-10 sm:py-14">
+      <Toaster position="top-center" />
+      <div className="mx-auto w-full max-w-2xl">
+        <Header onHome={goHome} canGoHome={view.kind !== "people"} />
+
+        {view.kind === "people" && (
+          <PeopleView
+            threads={threads}
+            onOpen={openThread}
+            onNew={() => setShowNewPerson(true)}
+          />
+        )}
+
+        {view.kind === "thread" && currentThread && (
+          <ThreadView
+            thread={currentThread}
+            allThreads={threads}
+            onSaveThreads={persist}
+            onBack={goHome}
+            onDelete={() => removeThread(currentThread.id)}
+          />
+        )}
+
+        {view.kind === "thread" && !currentThread && (
+          <div className="rounded-2xl border border-border/60 bg-card/70 p-6 text-center text-muted-foreground">
+            Thread not found. <button className="text-primary underline" onClick={goHome}>Go back</button>
+          </div>
+        )}
+
+        <footer className="mt-14 text-center text-xs text-muted-foreground italic">
+          {UI.disclaimer}
+        </footer>
+      </div>
+
+      {showNewPerson && (
+        <NewPersonModal
+          onCancel={() => setShowNewPerson(false)}
+          onCreate={handleCreatePerson}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ---------- Header ---------- */
+function Header({ onHome, canGoHome }: { onHome: () => void; canGoHome: boolean }) {
+  return (
+    <header className="mb-10 text-center">
+      <button
+        onClick={canGoHome ? onHome : undefined}
+        className={`mb-4 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-sm ${canGoHome ? "hover:text-foreground transition" : "cursor-default"}`}
+      >
+        <Sparkles className="h-3 w-3 text-primary" />
+        Reality Check
+      </button>
+      <h1 className="text-4xl sm:text-5xl font-display font-light text-foreground tracking-tight leading-[1.05]">
+        A softer kind <span className="italic font-normal text-primary/90">of clarity</span>
+      </h1>
+      <p className="mt-4 text-muted-foreground max-w-md mx-auto leading-relaxed font-light text-sm sm:text-base">
+        {UI.appTagline}
+      </p>
+    </header>
+  );
+}
+
+/* ---------- People list ---------- */
+function PeopleView({
+  threads, onOpen, onNew,
+}: {
+  threads: PersonThread[];
+  onOpen: (id: string) => void;
+  onNew: () => void;
+}) {
+  const sorted = useMemo(
+    () => [...threads].sort((a, b) => b.updatedAt - a.updatedAt),
+    [threads],
+  );
+
+  return (
+    <section>
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="font-display text-2xl font-light text-foreground">{UI.people}</h2>
+        <button
+          onClick={onNew}
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary/85 px-4 py-2 text-sm font-medium text-primary-foreground shadow-md transition hover:shadow-lg hover:brightness-105"
+        >
+          <Plus className="h-4 w-4" />
+          {UI.newPerson}
+        </button>
+      </div>
+
+      {sorted.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-border/70 bg-card/40 p-10 text-center">
+          <User className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">{UI.noPeople}</p>
+          <button
+            onClick={onNew}
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:shadow-md transition"
+          >
+            <Plus className="h-4 w-4" /> {UI.newPerson}
+          </button>
+        </div>
+      ) : (
+        <ul className="grid gap-3">
+          {sorted.map((t) => {
+            const last = latestEntry(t);
+            const trend = last?.result.trend;
+            return (
+              <li key={t.id}>
+                <button
+                  onClick={() => onOpen(t.id)}
+                  className="group w-full rounded-3xl border border-border/60 bg-gradient-to-br from-card/90 via-card/85 to-accent/15 p-5 text-left backdrop-blur-sm shadow-sm transition hover:shadow-md hover:border-primary/30"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <h3 className="font-display text-lg text-foreground truncate">{t.name}</h3>
+                        <span className="text-xs text-muted-foreground">
+                          · {t.entries.length} {t.entries.length === 1 ? UI.entry : UI.entries}
+                        </span>
+                      </div>
+                      {last ? (
+                        <>
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <FlagBadge label={last.result.flag} kind={last.result.flag_color} size="sm" />
+                            {trend && <TrendBadge trend={trend} />}
+                          </div>
+                          <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">
+                            {last.result.summary}
+                          </p>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {UI.lastInteraction}: {formatTime(last.createdAt)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-sm italic text-muted-foreground">No entries yet — open to add the first reflection.</p>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ---------- New person modal ---------- */
+function NewPersonModal({
+  onCancel, onCreate,
+}: { onCancel: () => void; onCreate: (name: string) => void }) {
+  const [name, setName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const submit = () => {
+    if (name.trim().length < 1) return;
+    onCreate(name.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-3xl border border-border/60 bg-card p-6 shadow-2xl">
+        <h3 className="font-display text-xl text-foreground mb-1">{UI.newThreadTitle}</h3>
+        <p className="text-sm text-muted-foreground mb-4">{UI.newThreadHint}</p>
+        <input
+          ref={inputRef}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder={UI.namePlaceholder}
+          className="w-full rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 focus:ring-ring/40"
+        />
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onCancel}
+            className="rounded-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >{UI.cancel}</button>
+          <button
+            onClick={submit}
+            disabled={name.trim().length < 1}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:shadow-md transition disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" /> {UI.start}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Thread view ---------- */
+function ThreadView({
+  thread, allThreads, onSaveThreads, onBack, onDelete,
+}: {
+  thread: PersonThread;
+  allThreads: PersonThread[];
+  onSaveThreads: (t: PersonThread[]) => void;
+  onBack: () => void;
+  onDelete: () => void;
+}) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [thread.entries.length]);
+
+  const last = latestEntry(thread);
+  const trend = last?.result.trend;
+
+  const handleNewEntry = (entry: ThreadEntry) => {
+    const next = addEntry(allThreads, thread.id, entry);
+    onSaveThreads(next);
+  };
+
+  return (
+    <section>
+      {/* Thread header */}
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-card/60 transition"
+        >
+          <ArrowLeft className="h-4 w-4" /> {UI.people}
+        </button>
+        <button
+          onClick={onDelete}
+          className="rounded-full p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
+          aria-label={UI.deleteThread}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mb-6 rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card/90 to-accent/20 p-6 backdrop-blur-sm shadow-sm">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-[0.7rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">{UI.threadStart}</div>
+            <h2 className="mt-1 font-display text-3xl text-foreground">{thread.name}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {formatDay(thread.createdAt)} · {thread.entries.length} {thread.entries.length === 1 ? UI.entry : UI.entries}
+            </p>
+          </div>
+          {trend && (
+            <div className="flex flex-col items-end gap-1">
+              <TrendBadge trend={trend} />
+              <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">overall trend</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="space-y-10">
+        {thread.entries.length === 0 && (
+          <div className="rounded-3xl border border-dashed border-border/60 bg-card/40 p-8 text-center text-sm text-muted-foreground">
+            No entries yet. Share the first situation or message below.
+          </div>
+        )}
+        {thread.entries.map((e, i) => (
+          <TimelineEntry key={e.id} entry={e} index={i} />
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Composer */}
+      <div className="mt-10">
+        <Composer
+          thread={thread}
+          onSubmitted={handleNewEntry}
+          continueMode={thread.entries.length > 0}
+        />
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Timeline entry (chat-style) ---------- */
+function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) {
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border/50" />
+        <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+          #{index + 1} · {formatTime(entry.createdAt)}
+        </span>
+        <div className="h-px flex-1 bg-border/50" />
+      </div>
+
+      {/* User message bubble — right aligned */}
+      <div className="flex justify-end">
+        <div className="max-w-[88%]">
+          <div className="mb-1.5 text-right text-[0.65rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {UI.yourEntry} · {entry.mode === "message" ? UI.modeMessage : UI.modeSituation}
+          </div>
+          <div className="rounded-3xl rounded-tr-md border border-primary/20 bg-gradient-to-br from-primary/12 via-primary/8 to-accent/15 px-5 py-4 shadow-sm">
+            {entry.userInput && (
+              <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">
+                {entry.userInput}
+              </p>
+            )}
+            {entry.images && entry.images.length > 0 && (
+              <div className={`grid grid-cols-3 gap-2 ${entry.userInput ? "mt-3" : ""}`}>
+                {entry.images.map((src, i) => (
+                  <img key={i} src={src} alt="" className="aspect-square rounded-lg border border-border/40 object-cover" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* AI reflection — left aligned */}
+      <div className="flex justify-start">
+        <div className="w-full max-w-[96%]">
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/70 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" /> {UI.reflection}
+          </div>
+          <div className="rounded-3xl rounded-tl-md border border-border/50 bg-card/70 p-5 sm:p-6 shadow-sm backdrop-blur-sm">
+            <ResultCards result={entry.result} variant={entry.mode} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Composer (input area, supports both modes) ---------- */
+function Composer({
+  thread, onSubmitted, continueMode,
+}: {
+  thread: PersonThread;
+  onSubmitted: (entry: ThreadEntry) => void;
+  continueMode: boolean;
+}) {
   const [mode, setMode] = useState<Mode>("situation");
   const [text, setText] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [resultMode, setResultMode] = useState<Mode>("situation");
-  const [saved, setSaved] = useState<SavedItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSaved(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-  const persist = (next: SavedItem[]) => {
-    setSaved(next);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
-  };
 
   const handleFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
@@ -97,7 +465,6 @@ function Index() {
     if (next.length) setImages((prev) => [...prev, ...next]);
   };
 
-  // Global paste handler in message mode
   useEffect(() => {
     if (mode !== "message") return;
     const onPaste = (e: ClipboardEvent) => {
@@ -135,29 +502,42 @@ function Index() {
       return;
     }
     setLoading(true);
-    setResult(null);
     try {
+      const priorEntries = thread.entries.map((e) => ({
+        createdAt: e.createdAt,
+        mode: e.mode,
+        userInput: e.userInput,
+        summary: e.result.summary,
+        flag: e.result.flag,
+        flag_color: e.result.flag_color,
+        pattern_tag: e.result.pattern_tag,
+      }));
+
       const { data, error } = await supabase.functions.invoke("analyze", {
-        body: { text: trimmed, mode, images: hasImages ? images : undefined },
+        body: {
+          text: trimmed,
+          mode,
+          images: hasImages ? images : undefined,
+          personName: thread.name,
+          priorEntries,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const res = data as AnalysisResult;
-      setResult(res);
-      setResultMode(mode);
-      setText("");
-      setImages([]);
 
-      const item: SavedItem = {
+      const entry: ThreadEntry = {
         id: crypto.randomUUID(),
-        summary: res.summary,
-        flag: res.flag,
-        flag_color: res.flag_color,
-        result: res,
         createdAt: Date.now(),
         mode,
+        userInput: trimmed,
+        // keep at most first 3 images to stay within localStorage quota
+        images: hasImages ? images.slice(0, 3) : undefined,
+        result: res,
       };
-      persist([item, ...saved].slice(0, 50));
+      onSubmitted(entry);
+      setText("");
+      setImages([]);
     } catch (e: any) {
       toast.error(e?.message || UI.error);
     } finally {
@@ -165,217 +545,112 @@ function Index() {
     }
   };
 
-  const remove = (id: string) => persist(saved.filter((s) => s.id !== id));
+  const placeholder = continueMode
+    ? UI.placeholderContinue
+    : mode === "situation" ? UI.placeholderSituation : UI.placeholderMessage;
 
   return (
-    <div className="min-h-screen px-4 py-10 sm:py-16">
-      <Toaster position="top-center" />
-      <div className="mx-auto w-full max-w-2xl">
-        {/* Header */}
-        <header className="mb-14 text-center">
-          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-sm">
-            <Sparkles className="h-3 w-3 text-primary" />
-            Reality Check
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-display font-light text-foreground tracking-tight leading-[1.05]">
-            A softer kind <span className="italic font-normal text-primary/90">of clarity</span>
-          </h1>
-          <p className="mt-5 text-muted-foreground max-w-md mx-auto leading-relaxed font-light">
-            {UI.tagline}
-          </p>
-        </header>
-
-        {/* Mode toggle */}
-        <div className="mb-5 flex justify-center">
-          <div className="inline-flex rounded-full border border-border/60 bg-background/60 p-1 text-sm shadow-sm">
-            {(["situation", "message"] as Mode[]).map((m) => {
-              const Icon = m === "situation" ? FileText : MessageSquare;
-              return (
-                <button
-                  key={m}
-                  onClick={() => switchMode(m)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-medium transition-all ${
-                    mode === m
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {m === "situation" ? UI.modeSituation : UI.modeMessage}
-                </button>
-              );
-            })}
-          </div>
+    <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-card/90 via-card/85 to-accent/15 p-4 sm:p-5 backdrop-blur-sm shadow-[0_10px_40px_-16px_rgba(180,140,150,0.3)]">
+      {/* Mode toggle */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="inline-flex rounded-full border border-border/60 bg-background/60 p-0.5 text-xs">
+          {(["situation", "message"] as Mode[]).map((m) => {
+            const Icon = m === "situation" ? FileText : MessageSquare;
+            return (
+              <button
+                key={m}
+                onClick={() => switchMode(m)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium transition ${
+                  mode === m
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+                {m === "situation" ? UI.modeSituation : UI.modeMessage}
+              </button>
+            );
+          })}
         </div>
+        <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
+          {continueMode ? "continuing thread" : "first entry"}
+        </span>
+      </div>
 
-        {/* Input section — visually distinct per mode */}
-        {mode === "situation" ? (
-          <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-card/90 via-card/80 to-accent/20 p-5 sm:p-7 backdrop-blur-sm shadow-[0_10px_40px_-12px_rgba(180,140,150,0.25)]">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={UI.placeholderSituation}
-              rows={8}
-              maxLength={4000}
-              className="w-full resize-none rounded-2xl border border-border/60 bg-background/70 p-4 text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 focus:ring-ring/40 transition shadow-inner"
-            />
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-muted-foreground">{text.length}/4000</span>
-              <button
-                onClick={analyze}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary/80 px-7 py-3 font-medium text-primary-foreground shadow-md transition hover:shadow-lg hover:brightness-105 disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {loading ? UI.analyzing : UI.analyze}
-              </button>
-            </div>
-          </section>
-        ) : (
-          <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-secondary/40 via-card/85 to-card/80 p-5 sm:p-7 backdrop-blur-sm shadow-[0_10px_40px_-12px_rgba(180,140,150,0.25)]">
-            {/* Drag & drop image area */}
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+      {mode === "message" && (
+        <>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            className={`group relative mb-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed p-4 text-center transition ${
+              dragOver
+                ? "border-primary bg-primary/5"
+                : "border-border/70 bg-background/50 hover:border-primary/50 hover:bg-background/70"
+            }`}
+          >
+            <ImagePlus className="h-5 w-5 text-primary/70" />
+            <div className="text-xs font-medium text-foreground">{UI.uploadHint}</div>
+            <div className="text-[0.65rem] text-muted-foreground">{UI.uploadSubhint}</div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) handleFiles(e.target.files);
+                e.target.value = "";
               }}
-              onClick={() => fileInputRef.current?.click()}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition ${
-                dragOver
-                  ? "border-primary bg-primary/5"
-                  : "border-border/70 bg-background/50 hover:border-primary/50 hover:bg-background/70"
-              }`}
-            >
-              <ImagePlus className="h-7 w-7 text-primary/70 transition group-hover:text-primary" />
-              <div className="text-sm font-medium text-foreground">{UI.uploadHint}</div>
-              <div className="text-xs text-muted-foreground">{UI.uploadSubhint}</div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.length) handleFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </div>
+            />
+          </div>
 
-            {/* Image previews */}
-            {images.length > 0 && (
-              <>
-                <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {images.map((src, i) => (
-                    <div
-                      key={i}
-                      className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm"
-                    >
-                      <img src={src} alt={`upload-${i}`} className="h-full w-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                        className="absolute right-1 top-1 rounded-full bg-background/85 p-1 text-foreground shadow-sm transition hover:bg-destructive hover:text-destructive-foreground"
-                        aria-label="Remove image"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
+          {images.length > 0 && (
+            <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {images.map((src, i) => (
+                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted">
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                    className="absolute right-1 top-1 rounded-full bg-background/85 p-0.5 text-foreground hover:bg-destructive hover:text-destructive-foreground"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
-                <p className="mt-3 text-xs italic text-muted-foreground">{UI.imagesNote}</p>
-              </>
-            )}
-
-            {/* Text area below */}
-            <div className="mt-5">
-              <label className="mb-2 block text-xs font-medium text-muted-foreground">
-                {UI.textareaLabelMessage}
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={UI.placeholderMessage}
-                rows={4}
-                maxLength={4000}
-                className="w-full resize-none rounded-2xl border border-border/60 bg-background/70 p-4 text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 focus:ring-ring/40 transition shadow-inner"
-              />
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-muted-foreground">
-                {text.length}/4000{images.length > 0 ? ` · ${images.length} image${images.length > 1 ? "s" : ""}` : ""}
-              </span>
-              <button
-                onClick={analyze}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary/80 px-7 py-3 font-medium text-primary-foreground shadow-md transition hover:shadow-lg hover:brightness-105 disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {loading ? UI.analyzing : UI.analyze}
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* Result */}
-        {result && (
-          <section className="mt-16">
-            <ResultCards result={result} variant={resultMode} />
-          </section>
-        )}
-
-        {/* Saved */}
-        <section className="mt-14">
-          <h2 className="mb-4 text-lg font-display font-semibold text-foreground">
-            {UI.savedTitle}
-          </h2>
-          {saved.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">{UI.noSaved}</p>
-          ) : (
-            <ul className="grid gap-3">
-              {saved.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-2xl border border-border/60 bg-card/80 p-4 sm:p-5 backdrop-blur-sm shadow-sm transition hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <FlagBadge label={s.flag} kind={s.flag_color} size="sm" />
-                        {s.mode === "message" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
-                            <MessageSquare className="h-2.5 w-2.5" /> message
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {formatTime(s.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground/85 leading-relaxed line-clamp-3">
-                        {s.summary}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => remove(s.id)}
-                      aria-label={UI.delete}
-                      className="rounded-full p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </li>
               ))}
-            </ul>
+            </div>
           )}
-        </section>
+        </>
+      )}
 
-        <footer className="mt-14 text-center text-xs text-muted-foreground italic">
-          {UI.disclaimer}
-        </footer>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={placeholder}
+        rows={mode === "situation" ? 5 : 3}
+        maxLength={4000}
+        className="w-full resize-none rounded-2xl border border-border/60 bg-background/70 p-3.5 text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 focus:ring-ring/40 transition"
+      />
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className="text-xs text-muted-foreground">
+          {text.length}/4000{images.length > 0 ? ` · ${images.length} image${images.length > 1 ? "s" : ""}` : ""}
+        </span>
+        <button
+          onClick={analyze}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary/85 px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition hover:shadow-lg hover:brightness-105 disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {loading ? UI.analyzing : UI.analyze}
+        </button>
       </div>
     </div>
   );
