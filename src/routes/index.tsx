@@ -172,15 +172,15 @@ function Index() {
       <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-2xl">
         {/* Header */}
-        <header className="mb-10 text-center">
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3 py-1 text-[0.7rem] font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur-sm">
+        <header className="mb-14 text-center">
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-sm">
             <Sparkles className="h-3 w-3 text-primary" />
             Reality Check
           </div>
-          <h1 className="text-4xl sm:text-5xl font-display font-semibold text-foreground">
-            A softer kind of clarity
+          <h1 className="text-5xl sm:text-6xl font-display font-light text-foreground tracking-tight leading-[1.05]">
+            A softer kind <span className="italic font-normal text-primary/90">of clarity</span>
           </h1>
-          <p className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
+          <p className="mt-5 text-muted-foreground max-w-md mx-auto leading-relaxed font-light">
             {UI.tagline}
           </p>
         </header>
