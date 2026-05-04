@@ -23,8 +23,7 @@ type SavedItem = {
 };
 
 const STORAGE_KEY = "reality-check-saved";
-const MAX_IMAGES = 6;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB each
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB each
 
 const UI = {
   tagline: "A quiet space to reflect on what's happening — and what it might mean.",
@@ -32,8 +31,8 @@ const UI = {
   modeMessage: "Analyze a message",
   placeholderSituation: "Describe what happened...",
   placeholderMessage: "Paste conversation text or upload screenshots",
-  uploadHint: "Drop screenshots here or click to upload",
-  uploadSubhint: "PNG, JPG · up to 6 images",
+  uploadHint: "Paste screenshots (Ctrl+V), drag & drop, or upload images",
+  uploadSubhint: "PNG, JPG — as many as you need",
   textareaLabelMessage: "If needed, paste the conversation text here for analysis",
   imagesNote: "Interpretation is based on what's visible in your screenshots.",
   analyze: "Analyze",
@@ -44,8 +43,7 @@ const UI = {
   empty: "Please share a little more to reflect on.",
   error: "Something went off course. Please try again.",
   disclaimer: "This tool offers reflection, not absolute truth.",
-  imageTooLarge: "Image is too large (max 5MB).",
-  tooManyImages: `You can upload up to ${MAX_IMAGES} images.`,
+  imageTooLarge: "Image is too large (max 8MB).",
 };
 
 function formatTime(ts: number) {
@@ -88,10 +86,6 @@ function Index() {
 
   const handleFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (images.length + arr.length > MAX_IMAGES) {
-      toast.error(UI.tooManyImages);
-      return;
-    }
     const next: string[] = [];
     for (const f of arr) {
       if (f.size > MAX_IMAGE_BYTES) {
@@ -102,6 +96,28 @@ function Index() {
     }
     if (next.length) setImages((prev) => [...prev, ...next]);
   };
+
+  // Global paste handler in message mode
+  useEffect(() => {
+    if (mode !== "message") return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const it of Array.from(items)) {
+        if (it.kind === "file") {
+          const f = it.getAsFile();
+          if (f && f.type.startsWith("image/")) files.push(f);
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        handleFiles(files);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [mode]);
 
   const removeImage = (i: number) =>
     setImages((prev) => prev.filter((_, idx) => idx !== i));
@@ -156,15 +172,15 @@ function Index() {
       <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-2xl">
         {/* Header */}
-        <header className="mb-10 text-center">
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3 py-1 text-[0.7rem] font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur-sm">
+        <header className="mb-14 text-center">
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-sm">
             <Sparkles className="h-3 w-3 text-primary" />
             Reality Check
           </div>
-          <h1 className="text-4xl sm:text-5xl font-display font-semibold text-foreground">
-            A softer kind of clarity
+          <h1 className="text-5xl sm:text-6xl font-display font-light text-foreground tracking-tight leading-[1.05]">
+            A softer kind <span className="italic font-normal text-primary/90">of clarity</span>
           </h1>
-          <p className="mt-3 text-muted-foreground max-w-md mx-auto leading-relaxed">
+          <p className="mt-5 text-muted-foreground max-w-md mx-auto leading-relaxed font-light">
             {UI.tagline}
           </p>
         </header>
@@ -307,7 +323,7 @@ function Index() {
 
         {/* Result */}
         {result && (
-          <section className="mt-8">
+          <section className="mt-16">
             <ResultCards result={result} variant={resultMode} />
           </section>
         )}

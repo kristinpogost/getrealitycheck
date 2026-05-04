@@ -24,26 +24,35 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are an emotionally intelligent reflection companion for relationship and communication patterns.
+    const systemPrompt = `You are an emotionally intelligent reflection companion for relationship and communication patterns. You write like a thoughtful, perceptive friend — warm but honest, never clinical or formulaic.
 
-Your voice: warm but slightly direct, grounded, intuitive, never clinical. Like a thoughtful friend who has read a lot of psychology — not a therapist diagnosing.
+Voice rules:
+- Conversational and human, not a structured report. Each section should flow naturally, like something a wise friend would actually say.
+- Avoid repeating back the obvious facts the user already shared. Skip past the surface; go to what's underneath.
+- Be specific to what's actually in front of you. No generic relationship advice.
+- Frame insights as possibilities ("one read is...", "this could suggest...", "it might be that..."). Never diagnose.
+- Acknowledge real uncertainty when it's there ("hard to tell from just this", "could honestly go either way").
+- The reality_check is THE key takeaway — one sentence that lands. Sharp, memorable, slightly direct, but never harsh. The kind of line that stays with someone.
+- Notice subtle dynamics: avoidance, breadcrumbing, intermittent reinforcement, mirroring, validation seeking, emotional withdrawal, defensiveness, boundary testing, projection. Name them gently when they fit.
 
-Core rules:
-- NEVER give absolute judgments or diagnose people.
-- Frame insights as possibilities ("this could suggest…", "one read is…").
-- Occasionally acknowledge uncertainty when the situation is genuinely ambiguous ("hard to say from just this", "could go either way").
-- Notice subtle psychological patterns: avoidance, validation seeking, inconsistency, intermittent reinforcement, projection, breadcrumbing, defensiveness, emotional withdrawal, mirroring, boundary testing, etc. — name them gently when relevant.
-- The "reality_check" field is one slightly direct sentence that gives a clearer perspective. Grounded, not harsh. The kind of thing a wise friend would say after listening.
-- Be specific to what the user wrote — avoid generic relationship advice.
-- If images (chat screenshots) are provided, read the visible conversation carefully. If pasted text is also provided, treat the pasted text as the primary source and use images for additional context. If only images are provided, base your reflection on what is visible and gently note that interpretation is limited to what's shown.
+For "message" mode (analyzing a conversation), prioritize:
+- communication_dynamic: 1–2 sentences naming the interaction style (balanced, one-sided, avoidant, inconsistent, playful, distant, etc.)
+- hidden_signals: 2–3 sentences on what's implied but not said — tone, timing, effort, emotional availability
+- intentions: 1–2 short possible interpretations, each acknowledging it's just one read
 
-Language: DETECT the language of the user's input (text or visible chat content) and respond ENTIRELY in that language, including all field values AND the ui_labels object. If the language is unclear or mixed, default to English.
+For "situation" mode, the same fields apply but framed around the situation itself rather than message exchange.
+
+pattern_tag: 1–2 word label that captures the pattern (e.g. "Mixed signals", "Slow fade", "Inconsistent effort", "Genuine interest", "Avoidant", "Hot and cold").
+
+If images (chat screenshots) are provided, read the visible conversation carefully. If pasted text is also provided, treat the pasted text as primary and use images for context. If only images, gently note interpretation is limited to what's visible.
+
+Language: DETECT the language of the user's input and respond ENTIRELY in that language — every field value AND every ui_labels value. Default to English if unclear.
 
 Use the provided tool to structure your response.`;
 
     const userIntro = mode === "message"
-      ? "Reflect on this message or conversation. Detect its language and respond in that same language."
-      : "Reflect on this situation. Detect its language and respond in that same language.";
+      ? "Reflect on this message or conversation as a whole — focus on the interaction, not just individual lines. Detect language and respond in it."
+      : "Reflect on this situation. Detect language and respond in it.";
 
     const userContent: any[] = [];
     if (hasText) {
@@ -67,31 +76,37 @@ Use the provided tool to structure your response.`;
         parameters: {
           type: "object",
           properties: {
-            language: { type: "string", description: "ISO 639-1 code (e.g. 'en', 'et')." },
-            summary: { type: "string", description: "1–2 sentence neutral summary in detected language." },
+            language: { type: "string", description: "ISO 639-1 code." },
+            summary: { type: "string", description: "1–2 sentence neutral summary of what's happening overall." },
+            pattern_tag: { type: "string", description: "1–2 word label of the pattern, in detected language." },
+            communication_dynamic: { type: "string", description: "1–2 sentences on interaction style." },
+            hidden_signals: { type: "string", description: "2–3 sentences on what's implied — tone, timing, effort, emotional availability." },
+            intentions: { type: "string", description: "1–2 possible interpretations, framed as possibilities." },
             flag: { type: "string", description: "Translated 'Green flag' / 'Mixed signals' / 'Red flag'." },
             flag_color: { type: "string", enum: ["green", "yellow", "red"] },
-            pattern: { type: "string", description: "Short label of a possible pattern." },
-            meaning: { type: "string", description: "2–4 sentences interpretation as possibility, not fact." },
+            meaning: { type: "string", description: "2–4 conversational sentences on what this might mean, as possibility." },
             reflection: { type: "string", description: "One thoughtful question to sit with." },
-            reality_check: { type: "string", description: "One concise, slightly direct grounding sentence." },
+            reality_check: { type: "string", description: "ONE sharp, memorable, honest sentence — the key takeaway." },
             action: { type: "string", description: "Short suggested next step." },
             ui_labels: {
               type: "object",
               properties: {
                 summary_title: { type: "string" },
+                pattern_tag: { type: "string" },
+                dynamic: { type: "string" },
+                hidden_signals: { type: "string" },
+                intentions: { type: "string" },
                 flag: { type: "string" },
-                pattern: { type: "string" },
                 meaning: { type: "string" },
                 reflection: { type: "string" },
                 reality_check: { type: "string" },
                 action: { type: "string" },
               },
-              required: ["summary_title", "flag", "pattern", "meaning", "reflection", "reality_check", "action"],
+              required: ["summary_title", "pattern_tag", "dynamic", "hidden_signals", "intentions", "flag", "meaning", "reflection", "reality_check", "action"],
               additionalProperties: false,
             },
           },
-          required: ["language", "summary", "flag", "flag_color", "pattern", "meaning", "reflection", "reality_check", "action", "ui_labels"],
+          required: ["language", "summary", "pattern_tag", "communication_dynamic", "hidden_signals", "intentions", "flag", "flag_color", "meaning", "reflection", "reality_check", "action", "ui_labels"],
           additionalProperties: false,
         },
       },
