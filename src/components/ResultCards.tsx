@@ -138,6 +138,13 @@ export function ResultCards({
         <p className="leading-relaxed text-foreground/85">{result.hidden_signals}</p>
       </SoftCard>
 
+      {/* Pattern over time — only when present */}
+      {result.pattern_over_time && (
+        <SoftCard label={l.pattern_over_time || "Pattern over time"} tint="cream" bubble={bubble}>
+          <p className="leading-relaxed text-foreground/85">{result.pattern_over_time}</p>
+        </SoftCard>
+      )}
+
       {/* Intentions — minimal */}
       <MinimalSection label={l.intentions}>
         <p className="leading-relaxed text-foreground/85 font-light">{result.intentions}</p>
