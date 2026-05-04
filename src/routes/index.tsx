@@ -592,15 +592,13 @@ function Composer({
       if ((data as any)?.error) throw new Error((data as any).error);
       const res = data as AnalysisResult;
 
-      const entry: ThreadEntry = {
-        id: crypto.randomUUID(),
-        createdAt: Date.now(),
+      const imagesToSave = hasImages ? images.slice(0, 3) : undefined;
+      const entry = await addEntryDb(userId, thread.id, {
         mode,
         userInput: trimmed,
-        // keep at most first 3 images to stay within localStorage quota
-        images: hasImages ? images.slice(0, 3) : undefined,
+        images: imagesToSave,
         result: res,
-      };
+      });
       onSubmitted(entry);
       setText("");
       setImages([]);
