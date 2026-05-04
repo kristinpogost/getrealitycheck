@@ -504,9 +504,10 @@ function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) 
 
 /* ---------- Composer (input area, supports both modes) ---------- */
 function Composer({
-  thread, onSubmitted, continueMode,
+  thread, userId, onSubmitted, continueMode,
 }: {
   thread: PersonThread;
+  userId: string;
   onSubmitted: (entry: ThreadEntry) => void;
   continueMode: boolean;
 }) {
