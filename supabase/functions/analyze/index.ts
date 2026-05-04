@@ -30,47 +30,59 @@ serve(async (req) => {
     const hasPriors = priors.length > 0;
 
     if (!hasText && !hasImages) {
-      return new Response(JSON.stringify({ error: "Please provide more detail or upload an image." }), {
+      return new Response(JSON.stringify({ error: "Please share a little more to reflect on." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const systemPrompt = `You are an emotionally intelligent reflection companion for relationship and communication patterns. You write like a thoughtful, perceptive friend — warm but honest, never clinical or formulaic.
+    const systemPrompt = `You are Reality Check — a calm, perceptive companion who specializes in relationship patterns, emotional dynamics, and behavioral signals. You read between the lines like a thoughtful friend who understands people. You are NOT a generic assistant.
 
-Voice rules:
-- Conversational and human, not a structured report. Each section should flow naturally, like something a wise friend would actually say.
-- Avoid repeating back the obvious facts the user already shared. Skip past the surface; go to what's underneath.
-- Be specific to what's actually in front of you. No generic relationship advice.
-- Frame insights as possibilities ("one read is...", "this could suggest...", "it might be that..."). Never diagnose.
-- Acknowledge real uncertainty when it's there ("hard to tell from just this", "could honestly go either way").
-- The reality_check is THE key takeaway — one sentence that lands. Sharp, memorable, slightly direct, but never harsh. The kind of line that stays with someone.
-- Notice subtle dynamics: avoidance, breadcrumbing, intermittent reinforcement, mirroring, validation seeking, emotional withdrawal, defensiveness, boundary testing, projection. Name them gently when they fit.
+CORE IDENTITY
+- Your only domain: what the OTHER person's behavior might indicate, and the patterns emerging in how they show up — green / mixed / red flags, consistency vs. inconsistency, emotional availability, effort, intention, respect for boundaries.
+- You do NOT give general life advice. You do NOT drift into productivity tips, career guidance, mental health diagnoses, or unrelated topics. If the input is off-topic, gently bring focus back to the relational signals.
 
-For "message" mode (analyzing a conversation), prioritize:
-- communication_dynamic: 1–2 sentences naming the interaction style.
-- hidden_signals: 2–3 sentences on what's implied — tone, timing, effort, emotional availability.
-- intentions: 1–2 short possible interpretations, each acknowledging it's just one read.
+VOICE
+- Speak DIRECTLY to the person reading — always "you," never "the user," never third person. Match the second-person form of the detected language ("sa/sina" in Estonian, "tú" in Spanish, "tu" in French/Italian, "du" in German/Nordic, etc.).
+- Calm, perceptive, slightly intimate but never intrusive. Like someone who notices things others miss and says them gently.
+- Natural, flowing sentences. No clichés ("trust your gut", "you deserve better", "actions speak louder than words"). No corporate softness. No therapy-speak.
+- Frame insights as possibilities ("one read is...", "this might be...", "it could suggest..."). Never diagnose.
+- Acknowledge real uncertainty when it's there.
 
-For "situation" mode, the same fields apply but framed around the situation itself.
+THE FLAG
+- Always grounded in WHY: consistency, effort, clarity vs. confusion, respect for your boundaries.
+- Never random or vibes-based. The flag_reasoning field must point to specific behavior in what you shared.
 
-pattern_tag: 1–2 word label that captures the pattern.
+SIGNAL BREAKDOWN (4 short lines, 1 line each)
+- initiative — who tends to start contact / move things forward
+- effort — depth and care of replies / actions (short and dry vs. thoughtful)
+- consistency — stable and predictable vs. hot/cold or unpredictable
+- emotional_tone — warm, neutral, distant, ambivalent, etc.
+Each line: under 12 words, observational, specific to what you see. If something can't be assessed from this entry, say so briefly ("hard to tell from one message").
 
-If images (chat screenshots) are provided, read the visible conversation. If pasted text is also provided, treat the pasted text as primary and use images for context.
+THREAD CONTEXT: ${hasPriors ? `This is a CONTINUING thread${personName ? ` about "${personName}"` : ""}. ${priors.length} prior entries below. Compare actively — name what's improving, declining, or repeating. Be specific to those entries.` : `FIRST entry${personName ? ` about "${personName}"` : ""}. No prior history yet.`}
 
-THREAD CONTEXT: ${hasPriors ? `This is a CONTINUING thread${personName ? ` about "${personName}"` : ""}. The user has shared ${priors.length} prior entries below. Use them to detect PATTERNS OVER TIME — repeated behaviors, escalation, de-escalation, consistency, contradictions, improvement, decline. Reference specific shifts when relevant.` : `This is the FIRST entry${personName ? ` about "${personName}"` : ""}. There is no prior history yet.`}
+WHAT'S CHANGING
+${hasPriors ? `2 short sentences naming the pattern shift across entries — improvement, decline, or repetition. Reference specifics ("the same pull-back from two entries ago", "more warmth than last time"). Avoid vague.` : `Since this is your first entry, write one short, gentle line in the detected language — something like "Patterns will start to show as you add more here." Do not invent a comparison.`}
 
-pattern_over_time field: ${hasPriors ? `2–3 sentences naming what's recurring or shifting across entries (e.g. "the same pull-back you described two weeks ago is showing up again", "effort has noticeably dropped since the first entry", "this is more consistent than past entries suggested"). Be specific to the prior entries.` : `Since this is the first entry, write a brief gentle note like "First entry — patterns will emerge as you add more." in the detected language.`}
+PATTERN OVER TIME
+${hasPriors ? `2–3 sentences on the longer arc — what behavior keeps surfacing, what's stable, what's drifting.` : `One short, gentle line acknowledging this is the start of the thread.`}
 
-trend field: one of "improving" | "declining" | "inconsistent" | "stable" | "new" — your read on the overall direction across entries (use "new" only when there are no priors).
+IF NOTHING CHANGES
+- 1–2 realistic, non-dramatic sentences on what this dynamic likely looks like over time if it stays exactly as it is now. No catastrophizing, no pep talk. Just a clear-eyed extrapolation.
 
-Language: DETECT the language of the user's CURRENT input and respond ENTIRELY in that language — every field value AND every ui_labels value. Default to English if unclear.
+REALITY CHECK
+- ONE sharp, memorable, honest sentence. The line that stays with you. Direct but never harsh. Spoken to "you."
 
-Use the provided tool to structure your response.`;
+If images (chat screenshots) are provided, read the visible conversation. If pasted text is also there, treat the pasted text as primary and use images for context.
+
+Language: DETECT the language of the current input and respond ENTIRELY in it — every field value AND every ui_labels value. Default to English if unclear.
+
+Use the provided tool to structure the response.`;
 
     const userIntro = mode === "message"
-      ? "Reflect on this message or conversation as a whole — focus on the interaction. Detect language and respond in it."
-      : "Reflect on this situation. Detect language and respond in it.";
+      ? "Reflect on this message or conversation as a whole — focus on what their behavior suggests. Speak directly to me in second person. Detect language and respond in it."
+      : "Reflect on this situation — focus on what the other person's behavior might indicate. Speak directly to me in second person. Detect language and respond in it.";
 
     const userContent: any[] = [];
 
@@ -79,14 +91,14 @@ Use the provided tool to structure your response.`;
       priorBlock = `\n\nPRIOR ENTRIES IN THIS THREAD${personName ? ` (about ${personName})` : ""}, oldest first:\n` +
         priors.map((p, i) => {
           const d = new Date(p.createdAt).toISOString().slice(0, 10);
-          return `[${i + 1}] ${d} · ${p.mode} · flag: ${p.flag}${p.pattern_tag ? ` · tag: ${p.pattern_tag}` : ""}\n  user: ${p.userInput.slice(0, 600)}\n  summary: ${p.summary}`;
+          return `[${i + 1}] ${d} · ${p.mode} · flag: ${p.flag}${p.pattern_tag ? ` · tag: ${p.pattern_tag}` : ""}\n  shared: ${p.userInput.slice(0, 600)}\n  summary: ${p.summary}`;
         }).join("\n\n") + "\n";
     }
 
     if (hasText) {
       userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY ---\n${text}\n---` });
     } else {
-      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\nThe user uploaded chat screenshot(s) — read the visible conversation.` });
+      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\nI uploaded chat screenshot(s) — read the visible conversation.` });
     }
     if (hasImages) {
       for (const img of images) {
@@ -100,23 +112,37 @@ Use the provided tool to structure your response.`;
       type: "function",
       function: {
         name: "reflect",
-        description: "Provide a reflective analysis with language detection and pattern-over-time awareness",
+        description: "Provide a relationally-focused reflection in second person, with grounded flag reasoning, signal breakdown, pattern shift detection, and realistic forward read.",
         parameters: {
           type: "object",
           properties: {
             language: { type: "string", description: "ISO 639-1 code." },
-            summary: { type: "string", description: "1–2 sentence neutral summary of what's happening overall." },
+            summary: { type: "string", description: "1–2 sentence summary written TO you, e.g. 'You're describing...'" },
             pattern_tag: { type: "string", description: "1–2 word label of the pattern, in detected language." },
-            communication_dynamic: { type: "string", description: "1–2 sentences on interaction style." },
-            hidden_signals: { type: "string", description: "2–3 sentences on what's implied — tone, timing, effort, emotional availability." },
-            intentions: { type: "string", description: "1–2 possible interpretations, framed as possibilities." },
+            communication_dynamic: { type: "string", description: "1–2 sentences on the interaction style, addressed to you." },
+            hidden_signals: { type: "string", description: "2–3 sentences on what's implied but unsaid — tone, timing, effort, emotional availability." },
+            intentions: { type: "string", description: "1–2 possible interpretations of their behavior, framed as possibilities." },
             flag: { type: "string", description: "Translated 'Green flag' / 'Mixed signals' / 'Red flag'." },
             flag_color: { type: "string", enum: ["green", "yellow", "red"] },
-            meaning: { type: "string", description: "2–4 conversational sentences on what this might mean, as possibility." },
-            reflection: { type: "string", description: "One thoughtful question to sit with." },
-            reality_check: { type: "string", description: "ONE sharp, memorable, honest sentence — the key takeaway." },
-            action: { type: "string", description: "Short suggested next step." },
-            pattern_over_time: { type: "string", description: "Pattern across prior entries, or a gentle first-entry note." },
+            flag_reasoning: { type: "string", description: "1–2 sentences explaining WHY the flag — grounded in consistency, effort, clarity vs. confusion, or respect for boundaries. Specific to what was shared." },
+            signal_breakdown: {
+              type: "object",
+              properties: {
+                initiative: { type: "string", description: "1 short line on who initiates contact." },
+                effort: { type: "string", description: "1 short line on depth/care of their effort." },
+                consistency: { type: "string", description: "1 short line on stability vs. unpredictability." },
+                emotional_tone: { type: "string", description: "1 short line on warmth, distance, neutrality." },
+              },
+              required: ["initiative", "effort", "consistency", "emotional_tone"],
+              additionalProperties: false,
+            },
+            meaning: { type: "string", description: "2–4 conversational sentences on what this might mean about them, addressed to you." },
+            reflection: { type: "string", description: "One thoughtful question to sit with, addressed to you." },
+            reality_check: { type: "string", description: "ONE sharp, memorable sentence — the key takeaway, spoken to you." },
+            if_nothing_changes: { type: "string", description: "1–2 realistic, non-dramatic sentences on how this dynamic likely plays out over time if it stays the same." },
+            action: { type: "string", description: "Short suggested next step, addressed to you." },
+            pattern_over_time: { type: "string", description: "Pattern across prior entries, or a brief first-entry note." },
+            whats_changing: { type: "string", description: "Short read on improvement / decline / repetition vs. priors, or first-entry note." },
             trend: { type: "string", enum: ["improving", "declining", "inconsistent", "stable", "new"] },
             ui_labels: {
               type: "object",
@@ -127,17 +153,25 @@ Use the provided tool to structure your response.`;
                 hidden_signals: { type: "string" },
                 intentions: { type: "string" },
                 flag: { type: "string" },
+                flag_reasoning: { type: "string" },
+                signal_breakdown: { type: "string" },
+                initiative: { type: "string" },
+                effort: { type: "string" },
+                consistency: { type: "string" },
+                emotional_tone: { type: "string" },
                 meaning: { type: "string" },
                 reflection: { type: "string" },
                 reality_check: { type: "string" },
+                if_nothing_changes: { type: "string" },
                 action: { type: "string" },
                 pattern_over_time: { type: "string" },
+                whats_changing: { type: "string" },
               },
-              required: ["summary_title", "pattern_tag", "dynamic", "hidden_signals", "intentions", "flag", "meaning", "reflection", "reality_check", "action", "pattern_over_time"],
+              required: ["summary_title", "pattern_tag", "dynamic", "hidden_signals", "intentions", "flag", "flag_reasoning", "signal_breakdown", "initiative", "effort", "consistency", "emotional_tone", "meaning", "reflection", "reality_check", "if_nothing_changes", "action", "pattern_over_time", "whats_changing"],
               additionalProperties: false,
             },
           },
-          required: ["language", "summary", "pattern_tag", "communication_dynamic", "hidden_signals", "intentions", "flag", "flag_color", "meaning", "reflection", "reality_check", "action", "pattern_over_time", "trend", "ui_labels"],
+          required: ["language", "summary", "pattern_tag", "communication_dynamic", "hidden_signals", "intentions", "flag", "flag_color", "flag_reasoning", "signal_breakdown", "meaning", "reflection", "reality_check", "if_nothing_changes", "action", "pattern_over_time", "whats_changing", "trend", "ui_labels"],
           additionalProperties: false,
         },
       },
