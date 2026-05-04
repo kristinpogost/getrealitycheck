@@ -372,11 +372,11 @@ function NewPersonModal({
 
 /* ---------- Thread view ---------- */
 function ThreadView({
-  thread, allThreads, onSaveThreads, onBack, onDelete,
+  thread, userId, onEntryAdded, onBack, onDelete,
 }: {
   thread: PersonThread;
-  allThreads: PersonThread[];
-  onSaveThreads: (t: PersonThread[]) => void;
+  userId: string;
+  onEntryAdded: (entry: ThreadEntry) => void;
   onBack: () => void;
   onDelete: () => void;
 }) {
@@ -388,11 +388,6 @@ function ThreadView({
 
   const last = latestEntry(thread);
   const trend = last?.result.trend;
-
-  const handleNewEntry = (entry: ThreadEntry) => {
-    const next = addEntry(allThreads, thread.id, entry);
-    onSaveThreads(next);
-  };
 
   return (
     <section>
