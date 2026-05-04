@@ -1,19 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText,
-  Plus, ArrowLeft, User,
+  Plus, ArrowLeft, User, LogOut,
 } from "lucide-react";
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
 import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
+import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
 import {
-  loadThreads, saveThreads, createThread, addEntry, latestEntry,
-  type PersonThread, type ThreadEntry, type Mode,
-} from "@/lib/threads";
+  fetchThreads, createPersonDb, addEntryDb, deletePersonDb, migrateLocalIfNeeded,
+} from "@/lib/db";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -78,39 +78,100 @@ function fileToDataUrl(file: File): Promise<string> {
 type View = { kind: "people" } | { kind: "thread"; id: string };
 
 function Index() {
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [threads, setThreads] = useState<PersonThread[]>([]);
   const [view, setView] = useState<View>({ kind: "people" });
   const [showNewPerson, setShowNewPerson] = useState(false);
 
-  useEffect(() => { setThreads(loadThreads()); }, []);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUserId(session?.user?.id ?? null);
+      setAuthChecked(true);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user?.id ?? null);
+      setAuthChecked(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
-  const persist = (next: PersonThread[]) => {
-    setThreads(next);
-    saveThreads(next);
+  useEffect(() => {
+    if (authChecked && !userId) navigate({ to: "/auth" });
+  }, [authChecked, userId, navigate]);
+
+  const reload = async () => {
+    try {
+      const t = await fetchThreads();
+      setThreads(t);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to load");
+    }
   };
+
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const migrated = await migrateLocalIfNeeded(userId);
+      if (migrated) toast.success("Local threads moved to your account.");
+      await reload();
+    })();
+  }, [userId]);
 
   const openThread = (id: string) => setView({ kind: "thread", id });
-  const goHome = () => setView({ kind: "people" });
+  const goHome = () => { setView({ kind: "people" }); reload(); };
 
-  const handleCreatePerson = (name: string) => {
-    const t = createThread(name);
-    persist([t, ...threads]);
-    setShowNewPerson(false);
-    openThread(t.id);
+  const handleCreatePerson = async (name: string) => {
+    if (!userId) return;
+    try {
+      const t = await createPersonDb(userId, name);
+      setThreads((prev) => [t, ...prev]);
+      setShowNewPerson(false);
+      openThread(t.id);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to create");
+    }
   };
 
-  const removeThread = (id: string) => {
+  const removeThread = async (id: string) => {
     if (!confirm(UI.confirmDelete)) return;
-    persist(threads.filter((t) => t.id !== id));
-    goHome();
+    try {
+      await deletePersonDb(id);
+      setThreads((prev) => prev.filter((t) => t.id !== id));
+      goHome();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete");
+    }
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" });
   };
 
   const currentThread = view.kind === "thread" ? threads.find((t) => t.id === view.id) : undefined;
+
+  if (!authChecked || !userId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-4 py-10 sm:py-14">
       <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-2 flex justify-end">
+          <button
+            onClick={signOut}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-card/60 transition"
+          >
+            <LogOut className="h-3 w-3" /> Sign out
+          </button>
+        </div>
         <Header onHome={goHome} canGoHome={view.kind !== "people"} />
 
         {view.kind === "people" && (
@@ -124,8 +185,16 @@ function Index() {
         {view.kind === "thread" && currentThread && (
           <ThreadView
             thread={currentThread}
-            allThreads={threads}
-            onSaveThreads={persist}
+            userId={userId}
+            onEntryAdded={(entry) => {
+              setThreads((prev) =>
+                prev.map((t) =>
+                  t.id === currentThread.id
+                    ? { ...t, updatedAt: entry.createdAt, entries: [...t.entries, entry] }
+                    : t,
+                ),
+              );
+            }}
             onBack={goHome}
             onDelete={() => removeThread(currentThread.id)}
           />
@@ -303,11 +372,11 @@ function NewPersonModal({
 
 /* ---------- Thread view ---------- */
 function ThreadView({
-  thread, allThreads, onSaveThreads, onBack, onDelete,
+  thread, userId, onEntryAdded, onBack, onDelete,
 }: {
   thread: PersonThread;
-  allThreads: PersonThread[];
-  onSaveThreads: (t: PersonThread[]) => void;
+  userId: string;
+  onEntryAdded: (entry: ThreadEntry) => void;
   onBack: () => void;
   onDelete: () => void;
 }) {
@@ -319,11 +388,6 @@ function ThreadView({
 
   const last = latestEntry(thread);
   const trend = last?.result.trend;
-
-  const handleNewEntry = (entry: ThreadEntry) => {
-    const next = addEntry(allThreads, thread.id, entry);
-    onSaveThreads(next);
-  };
 
   return (
     <section>
@@ -379,7 +443,8 @@ function ThreadView({
       <div className="mt-10">
         <Composer
           thread={thread}
-          onSubmitted={handleNewEntry}
+          userId={userId}
+          onSubmitted={onEntryAdded}
           continueMode={thread.entries.length > 0}
         />
       </div>
@@ -439,9 +504,10 @@ function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) 
 
 /* ---------- Composer (input area, supports both modes) ---------- */
 function Composer({
-  thread, onSubmitted, continueMode,
+  thread, userId, onSubmitted, continueMode,
 }: {
   thread: PersonThread;
+  userId: string;
   onSubmitted: (entry: ThreadEntry) => void;
   continueMode: boolean;
 }) {
@@ -526,15 +592,13 @@ function Composer({
       if ((data as any)?.error) throw new Error((data as any).error);
       const res = data as AnalysisResult;
 
-      const entry: ThreadEntry = {
-        id: crypto.randomUUID(),
-        createdAt: Date.now(),
+      const imagesToSave = hasImages ? images.slice(0, 3) : undefined;
+      const entry = await addEntryDb(userId, thread.id, {
         mode,
         userInput: trimmed,
-        // keep at most first 3 images to stay within localStorage quota
-        images: hasImages ? images.slice(0, 3) : undefined,
+        images: imagesToSave,
         result: res,
-      };
+      });
       onSubmitted(entry);
       setText("");
       setImages([]);
