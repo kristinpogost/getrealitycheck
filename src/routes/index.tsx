@@ -443,7 +443,8 @@ function ThreadView({
       <div className="mt-10">
         <Composer
           thread={thread}
-          onSubmitted={handleNewEntry}
+          userId={userId}
+          onSubmitted={onEntryAdded}
           continueMode={thread.entries.length > 0}
         />
       </div>
