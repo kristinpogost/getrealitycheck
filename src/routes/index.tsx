@@ -23,8 +23,7 @@ type SavedItem = {
 };
 
 const STORAGE_KEY = "reality-check-saved";
-const MAX_IMAGES = 6;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB each
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB each
 
 const UI = {
   tagline: "A quiet space to reflect on what's happening — and what it might mean.",
@@ -32,8 +31,8 @@ const UI = {
   modeMessage: "Analyze a message",
   placeholderSituation: "Describe what happened...",
   placeholderMessage: "Paste conversation text or upload screenshots",
-  uploadHint: "Drop screenshots here or click to upload",
-  uploadSubhint: "PNG, JPG · up to 6 images",
+  uploadHint: "Paste screenshots (Ctrl+V), drag & drop, or upload images",
+  uploadSubhint: "PNG, JPG — as many as you need",
   textareaLabelMessage: "If needed, paste the conversation text here for analysis",
   imagesNote: "Interpretation is based on what's visible in your screenshots.",
   analyze: "Analyze",
@@ -44,8 +43,7 @@ const UI = {
   empty: "Please share a little more to reflect on.",
   error: "Something went off course. Please try again.",
   disclaimer: "This tool offers reflection, not absolute truth.",
-  imageTooLarge: "Image is too large (max 5MB).",
-  tooManyImages: `You can upload up to ${MAX_IMAGES} images.`,
+  imageTooLarge: "Image is too large (max 8MB).",
 };
 
 function formatTime(ts: number) {
@@ -88,10 +86,6 @@ function Index() {
 
   const handleFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (images.length + arr.length > MAX_IMAGES) {
-      toast.error(UI.tooManyImages);
-      return;
-    }
     const next: string[] = [];
     for (const f of arr) {
       if (f.size > MAX_IMAGE_BYTES) {
@@ -102,6 +96,28 @@ function Index() {
     }
     if (next.length) setImages((prev) => [...prev, ...next]);
   };
+
+  // Global paste handler in message mode
+  useEffect(() => {
+    if (mode !== "message") return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const it of Array.from(items)) {
+        if (it.kind === "file") {
+          const f = it.getAsFile();
+          if (f && f.type.startsWith("image/")) files.push(f);
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        handleFiles(files);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [mode]);
 
   const removeImage = (i: number) =>
     setImages((prev) => prev.filter((_, idx) => idx !== i));
