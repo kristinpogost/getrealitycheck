@@ -170,7 +170,7 @@ function Index() {
                             </p>
                           </>
                         ) : (
-                          <p className="text-sm italic text-muted-foreground">No entries yet — open to add the first reflection.</p>
+                          <p className="text-sm italic text-muted-foreground">{UI.noEntriesShort}</p>
                         )}
                       </div>
                     </Link>
