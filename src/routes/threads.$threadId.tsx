@@ -449,9 +449,10 @@ function TimelineEntry({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const result = data as AnalysisResult;
+      if (result?.language) setStoredLang(result.language);
       await updateEntryDb(entry.id, { result });
       onUpdated({ ...entry, result });
-      toast.success("Regenerated.");
+      toast.success(UI.regenerated);
     } catch (e: any) {
       toast.error(e?.message || UI.error);
     } finally {
