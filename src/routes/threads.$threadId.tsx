@@ -547,7 +547,7 @@ function TimelineEntry({
 
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[0.65rem] text-muted-foreground">
-                    {draft.length}/4000{draftImages.length > 0 ? ` · ${draftImages.length} image${draftImages.length > 1 ? "s" : ""}` : ""}
+                    {draft.length}/4000{draftImages.length > 0 ? ` · ${draftImages.length} ${draftImages.length === 1 ? UI.image : UI.images}` : ""}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
