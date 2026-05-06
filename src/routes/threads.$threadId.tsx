@@ -376,12 +376,13 @@ function ThreadView({
 
 /* ---------- Timeline entry ---------- */
 function TimelineEntry({
-  entry, index, thread, onUpdated, reflectionRef, forceReflectionOpen,
+  entry, index, thread, onUpdated, onDeleted, reflectionRef, forceReflectionOpen,
 }: {
   entry: ThreadEntry;
   index: number;
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
+  onDeleted?: (entryId: string) => Promise<boolean | void>;
   reflectionRef?: React.Ref<HTMLDivElement>;
   forceReflectionOpen?: boolean;
 }) {
