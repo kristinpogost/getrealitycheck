@@ -296,7 +296,7 @@ function ThreadView({
         />
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-6">
         {thread.entries.length === 0 && (
           <div className="rounded-3xl border border-dashed border-border/60 bg-card/40 p-8 text-center text-sm text-muted-foreground">
             No entries yet. Share the first situation or message above.
@@ -304,14 +304,25 @@ function ThreadView({
         )}
         {reversed.map((e, i) => {
           const originalIndex = thread.entries.length - 1 - i;
+          if (i === 0) {
+            return (
+              <TimelineEntry
+                key={e.id}
+                entry={e}
+                index={originalIndex}
+                thread={thread}
+                onUpdated={onEntryUpdated}
+                reflectionRef={latestReflectionRef}
+              />
+            );
+          }
           return (
-            <TimelineEntry
+            <MemoryCard
               key={e.id}
               entry={e}
               index={originalIndex}
               thread={thread}
               onUpdated={onEntryUpdated}
-              reflectionRef={i === 0 ? latestReflectionRef : undefined}
             />
           );
         })}
