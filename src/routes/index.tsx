@@ -8,7 +8,7 @@ import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
 import { latestEntry, type PersonThread } from "@/lib/threads";
 import { fetchThreads, createPersonDb, migrateLocalIfNeeded } from "@/lib/db";
-import { useUi } from "@/lib/ui-i18n";
+import { useUi, useUiLang, setManualLang } from "@/lib/ui-i18n";
 
 export const Route = createFileRoute("/")({
   component: Index,
