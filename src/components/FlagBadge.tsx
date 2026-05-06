@@ -62,7 +62,7 @@ export function FlagBadge({
       className={`inline-flex items-center gap-2 rounded-full border ${sizing} font-medium shadow-sm ${styles[k]}`}
     >
       <I className={size === "lg" ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={2.5} />
-      {label}
+      {text}
     </span>
   );
 }
