@@ -979,6 +979,7 @@ function MemoryCard({
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
 }) {
+  const UI = useUi();
   const [open, setOpen] = useState(false);
   const r = entry.result;
   const flagColor = r.flag_color;
