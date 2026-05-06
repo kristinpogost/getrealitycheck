@@ -934,3 +934,87 @@ function Composer({
     </div>
   );
 }
+
+/* ---------- Memory card (compact preview → modal) ---------- */
+function MemoryCard({
+  entry, index, thread, onUpdated,
+}: {
+  entry: ThreadEntry;
+  index: number;
+  thread: PersonThread;
+  onUpdated: (entry: ThreadEntry) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const r = entry.result;
+  const flagColor = r.flag_color;
+
+  const tintWrap =
+    flagColor === "green"
+      ? "from-flag-green-soft/35 via-card/85 to-card/70 border-flag-green/20"
+      : flagColor === "red"
+        ? "from-flag-red-soft/35 via-card/85 to-card/70 border-flag-red/20"
+        : "from-flag-yellow-soft/30 via-card/85 to-card/70 border-flag-yellow/20";
+
+  const glow =
+    flagColor === "green"
+      ? "bg-flag-green-soft/40"
+      : flagColor === "red"
+        ? "bg-flag-red-soft/40"
+        : "bg-flag-yellow-soft/35";
+
+  const teaser = entry.userInput?.trim().slice(0, 110);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`group relative block w-full cursor-pointer overflow-hidden rounded-3xl border bg-gradient-to-br ${tintWrap} text-left p-5 backdrop-blur-sm shadow-[0_4px_20px_-14px_rgba(180,140,150,0.3)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_32px_-16px_rgba(180,140,150,0.4)]`}
+      >
+        <div className={`pointer-events-none absolute -top-12 -right-8 h-32 w-32 rounded-full blur-3xl opacity-60 ${glow}`} />
+        <div className="relative flex items-start gap-3">
+          <div className="min-w-0 flex-1 space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <FlagBadge label={r.flag} kind={r.flag_color} size="sm" />
+              <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/8 px-2.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-[0.15em] text-primary">
+                {r.pattern_tag}
+              </span>
+              {entry.images && entry.images.length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-background/60 px-2 py-0.5 text-[0.6rem] text-muted-foreground">
+                  <ImagePlus className="h-2.5 w-2.5" /> {entry.images.length}
+                </span>
+              )}
+            </div>
+            <p className="font-display text-[1rem] leading-snug text-foreground/90 line-clamp-2">
+              {r.summary}
+            </p>
+            {teaser && (
+              <p className="text-xs text-muted-foreground/90 line-clamp-1">
+                <span className="text-muted-foreground/60">{UI.yourEntry}: </span>
+                {teaser}{entry.userInput && entry.userInput.length > 110 ? "…" : ""}
+              </p>
+            )}
+            <div className="flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground/80">
+              <Clock className="h-2.5 w-2.5" />
+              <span>#{index + 1} · {formatTime(entry.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-border/60 bg-gradient-to-br from-card via-card/95 to-accent/10 backdrop-blur-xl">
+          <div className="p-6 sm:p-8">
+            <TimelineEntry
+              entry={entry}
+              index={index}
+              thread={thread}
+              onUpdated={(e) => { onUpdated(e); }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
