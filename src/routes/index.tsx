@@ -407,10 +407,16 @@ function ThreadView({
     setEditing(false);
   };
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const latestReflectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (thread.entries.length === 0) return;
+    // Wait a tick so the new entry has rendered, then scroll to the start
+    // of the latest AI reflection (just above the flag/summary).
+    const id = window.setTimeout(() => {
+      latestReflectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => window.clearTimeout(id);
   }, [thread.entries.length]);
 
   const last = latestEntry(thread);
@@ -496,9 +502,13 @@ function ThreadView({
           </div>
         )}
         {thread.entries.map((e, i) => (
-          <TimelineEntry key={e.id} entry={e} index={i} />
+          <TimelineEntry
+            key={e.id}
+            entry={e}
+            index={i}
+            reflectionRef={i === thread.entries.length - 1 ? latestReflectionRef : undefined}
+          />
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {/* Composer */}
