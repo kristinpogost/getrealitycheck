@@ -529,9 +529,9 @@ function TimelineEntry({
                 >
                   <ImagePlus className="h-4 w-4 text-primary/70" />
                   <div className="text-[0.7rem] font-medium text-foreground">
-                    {draftImages.length > 0 ? "Add more screenshots" : "Add screenshots"}
+                    {draftImages.length > 0 ? UI.addMoreScreenshots : UI.addScreenshots}
                   </div>
-                  <div className="text-[0.6rem] text-muted-foreground">Paste, drag, or click</div>
+                  <div className="text-[0.6rem] text-muted-foreground">{UI.pasteDragClick}</div>
                   <input
                     ref={editFileInputRef}
                     type="file"
