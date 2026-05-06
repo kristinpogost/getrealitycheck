@@ -407,10 +407,16 @@ function ThreadView({
     setEditing(false);
   };
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const latestReflectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (thread.entries.length === 0) return;
+    // Wait a tick so the new entry has rendered, then scroll to the start
+    // of the latest AI reflection (just above the flag/summary).
+    const id = window.setTimeout(() => {
+      latestReflectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => window.clearTimeout(id);
   }, [thread.entries.length]);
 
   const last = latestEntry(thread);
@@ -496,9 +502,13 @@ function ThreadView({
           </div>
         )}
         {thread.entries.map((e, i) => (
-          <TimelineEntry key={e.id} entry={e} index={i} />
+          <TimelineEntry
+            key={e.id}
+            entry={e}
+            index={i}
+            reflectionRef={i === thread.entries.length - 1 ? latestReflectionRef : undefined}
+          />
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {/* Composer */}
@@ -515,7 +525,7 @@ function ThreadView({
 }
 
 /* ---------- Timeline entry (chat-style) ---------- */
-function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) {
+function TimelineEntry({ entry, index, reflectionRef }: { entry: ThreadEntry; index: number; reflectionRef?: React.Ref<HTMLDivElement> }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
@@ -548,7 +558,7 @@ function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) 
       </div>
 
       {/* AI reflection — left aligned */}
-      <div className="flex justify-start">
+      <div ref={reflectionRef} className="flex justify-start scroll-mt-6">
         <div className="w-full max-w-[96%]">
           <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/70 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" /> {UI.reflection}
