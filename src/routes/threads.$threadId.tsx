@@ -331,19 +331,66 @@ function TimelineEntry({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(entry.userInput);
+  const [draftImages, setDraftImages] = useState<string[]>(entry.images ?? []);
+  const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setDraft(entry.userInput); }, [entry.userInput, entry.id]);
+  useEffect(() => { setDraftImages(entry.images ?? []); }, [entry.images, entry.id]);
+
+  const addEditFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const next: string[] = [];
+    for (const f of arr) {
+      if (f.size > MAX_IMAGE_BYTES) {
+        toast.error(`${f.name}: ${UI.imageTooLarge}`);
+        continue;
+      }
+      try { next.push(await fileToDataUrl(f)); } catch {}
+    }
+    if (next.length) setDraftImages((prev) => [...prev, ...next]);
+  };
+
+  // Paste support while editing
+  useEffect(() => {
+    if (!isEditing) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const it of Array.from(items)) {
+        if (it.kind === "file") {
+          const f = it.getAsFile();
+          if (f && f.type.startsWith("image/")) files.push(f);
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        addEditFiles(files);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [isEditing]);
+
+  const removeDraftImage = (i: number) =>
+    setDraftImages((prev) => prev.filter((_, idx) => idx !== i));
+
+  const cancelEdit = () => {
+    setDraft(entry.userInput);
+    setDraftImages(entry.images ?? []);
+    setIsEditing(false);
+  };
 
   const saveAndRegenerate = async () => {
     const trimmed = draft.trim();
-    if (trimmed.length < 3 && !(entry.images && entry.images.length > 0)) {
-      toast.error("Please keep at least a few words.");
+    if (trimmed.length < 3 && draftImages.length === 0) {
+      toast.error("Please keep at least a few words or one screenshot.");
       return;
     }
     setBusy(true);
     try {
-      // Build prior entries excluding THIS one (so the AI sees this as a fresh take)
       const priorEntries = thread.entries
         .filter((e) => e.id !== entry.id && e.createdAt < entry.createdAt)
         .map((e) => ({
@@ -356,11 +403,12 @@ function TimelineEntry({
           pattern_tag: e.result.pattern_tag,
         }));
 
+      const imagesForAi = draftImages.length > 0 ? draftImages : undefined;
       const { data, error } = await supabase.functions.invoke("analyze", {
         body: {
           text: trimmed,
           mode: entry.mode,
-          images: entry.images,
+          images: imagesForAi,
           personName: thread.name,
           priorEntries,
         },
@@ -369,8 +417,9 @@ function TimelineEntry({
       if ((data as any)?.error) throw new Error((data as any).error);
       const result = data as AnalysisResult;
 
-      await updateEntryDb(entry.id, { userInput: trimmed, result });
-      onUpdated({ ...entry, userInput: trimmed, result });
+      const imagesForDb = draftImages.length > 0 ? draftImages : null;
+      await updateEntryDb(entry.id, { userInput: trimmed, images: imagesForDb, result });
+      onUpdated({ ...entry, userInput: trimmed, images: imagesForAi, result });
       setIsEditing(false);
       toast.success("Reflection updated.");
     } catch (e: any) {
@@ -451,20 +500,77 @@ function TimelineEntry({
                   maxLength={4000}
                   className="w-full resize-none rounded-xl border border-border/60 bg-background/70 p-3 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 focus:ring-ring/40"
                 />
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    onClick={() => { setDraft(entry.userInput); setIsEditing(false); }}
-                    disabled={busy}
-                    className="rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >{UI.cancel}</button>
-                  <button
-                    onClick={saveAndRegenerate}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm hover:brightness-105 disabled:opacity-60"
-                  >
-                    {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                    {UI.save}
-                  </button>
+
+                {draftImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {draftImages.map((src, i) => (
+                      <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted">
+                        <img src={src} alt="" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); removeDraftImage(i); }}
+                          className="absolute right-1 top-1 rounded-full bg-background/85 p-0.5 text-foreground hover:bg-destructive hover:text-destructive-foreground"
+                          aria-label="Remove image"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    if (e.dataTransfer.files?.length) addEditFiles(e.dataTransfer.files);
+                  }}
+                  onClick={() => editFileInputRef.current?.click()}
+                  className={`group relative flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed p-3 text-center transition ${
+                    dragOver
+                      ? "border-primary bg-primary/5"
+                      : "border-border/70 bg-background/40 hover:border-primary/50 hover:bg-background/70"
+                  }`}
+                >
+                  <ImagePlus className="h-4 w-4 text-primary/70" />
+                  <div className="text-[0.7rem] font-medium text-foreground">
+                    {draftImages.length > 0 ? "Add more screenshots" : "Add screenshots"}
+                  </div>
+                  <div className="text-[0.6rem] text-muted-foreground">Paste, drag, or click</div>
+                  <input
+                    ref={editFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.length) addEditFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[0.65rem] text-muted-foreground">
+                    {draft.length}/4000{draftImages.length > 0 ? ` · ${draftImages.length} image${draftImages.length > 1 ? "s" : ""}` : ""}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={cancelEdit}
+                      disabled={busy}
+                      className="rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >{UI.cancel}</button>
+                    <button
+                      onClick={saveAndRegenerate}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm hover:brightness-105 disabled:opacity-60"
+                    >
+                      {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      {UI.save}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
