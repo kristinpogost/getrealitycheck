@@ -278,7 +278,7 @@ function ThreadView({
       <div className="space-y-6">
         {thread.entries.length === 0 && (
           <div className="rounded-3xl border border-dashed border-border/60 bg-card/40 p-8 text-center text-sm text-muted-foreground">
-            No entries yet. Share the first situation or message above.
+            {UI.noEntriesYet}
           </div>
         )}
         {reversed.map((e, i) => {
