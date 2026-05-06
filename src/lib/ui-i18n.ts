@@ -66,6 +66,8 @@ export const UI_STRINGS = {
     removeImage: "Remove image",
     image: "image",
     images: "images",
+    showMore: "Show more",
+    showLess: "Show less",
   },
   et: {
     // Index page
@@ -128,6 +130,8 @@ export const UI_STRINGS = {
     removeImage: "Eemalda pilt",
     image: "pilt",
     images: "pilti",
+    showMore: "Näita rohkem",
+    showLess: "Näita vähem",
   },
 } as const;
 
