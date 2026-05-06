@@ -1,5 +1,5 @@
 import { FlagBadge, type FlagKind } from "./FlagBadge";
-import { Sparkles, Tag, Send, Heart, Repeat, Smile, Clock } from "lucide-react";
+import { Sparkles, Send, Heart, Repeat, Smile, Clock } from "lucide-react";
 
 export type UiLabels = {
   summary_title: string;
