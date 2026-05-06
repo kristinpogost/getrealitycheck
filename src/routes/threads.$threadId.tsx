@@ -236,7 +236,7 @@ function ThreadView({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={commitRename}
                   className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-card/60"
-                  aria-label="Save name"
+                  aria-label={UI.saveName}
                 >
                   <Check className="h-4 w-4" />
                 </button>
