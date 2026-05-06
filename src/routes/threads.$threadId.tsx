@@ -379,7 +379,7 @@ function TimelineEntry({
   const saveAndRegenerate = async () => {
     const trimmed = draft.trim();
     if (trimmed.length < 3 && draftImages.length === 0) {
-      toast.error("Please keep at least a few words or one screenshot.");
+      toast.error(UI.keepFewWords);
       return;
     }
     setBusy(true);
