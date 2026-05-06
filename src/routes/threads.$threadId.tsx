@@ -353,6 +353,7 @@ function ThreadView({
                 index={originalIndex}
                 thread={thread}
                 onUpdated={onEntryUpdated}
+                onDeleted={onEntryDeleted}
                 reflectionRef={latestReflectionRef}
               />
             );
@@ -364,6 +365,7 @@ function ThreadView({
               index={originalIndex}
               thread={thread}
               onUpdated={onEntryUpdated}
+              onDeleted={onEntryDeleted}
             />
           );
         })}
