@@ -610,6 +610,7 @@ function ReflectionCard({
   reflectionRef?: React.Ref<HTMLDivElement>;
   defaultOpen?: boolean;
 }) {
+  const UI = useUi();
   const [open, setOpen] = useState(!!defaultOpen);
   const r = entry.result;
   const flagColor = r.flag_color;
