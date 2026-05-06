@@ -30,7 +30,7 @@ serve(async (req) => {
 
     const hasText = typeof text === "string" && text.trim().length >= 3;
     const hasImages = Array.isArray(images) && images.length > 0;
-    const priors: PriorEntry[] = Array.isArray(priorEntries) ? priorEntries.slice(-8) : [];
+    const priors: PriorEntry[] = Array.isArray(priorEntries) ? priorEntries.slice(-20) : [];
     const hasPriors = priors.length > 0;
 
     if (!hasText && !hasImages) {
