@@ -881,7 +881,7 @@ function Composer({
           })}
         </div>
         <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-          {continueMode ? "continuing thread" : "first entry"}
+          {continueMode ? UI.continuingThread : UI.firstEntry}
         </span>
       </div>
 
