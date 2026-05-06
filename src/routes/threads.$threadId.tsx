@@ -5,9 +5,10 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText,
-  ArrowLeft, Pencil, Check, RefreshCw,
+  ArrowLeft, Pencil, Check, RefreshCw, ChevronDown,
 } from "lucide-react";
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
+import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
 import { ScreenshotGallery } from "@/components/ScreenshotGallery";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
@@ -591,27 +592,108 @@ function TimelineEntry({
         </div>
       </div>
 
-      {/* AI reflection */}
-      <div ref={reflectionRef} className="flex justify-start scroll-mt-6">
-        <div className="w-full max-w-[96%]">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/70 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              <Sparkles className="h-3 w-3 text-primary" /> {UI.reflection}
+      {/* AI reflection — collapsible insight card */}
+      <ReflectionCard
+        entry={entry}
+        busy={busy}
+        onRegenerate={regenerateOnly}
+        reflectionRef={reflectionRef}
+        defaultOpen={index === thread.entries.length - 1 && thread.entries.length === 1}
+      />
+    </div>
+  );
+}
+
+/* ---------- Reflection card (compact → expanded) ---------- */
+function ReflectionCard({
+  entry, busy, onRegenerate, reflectionRef, defaultOpen,
+}: {
+  entry: ThreadEntry;
+  busy: boolean;
+  onRegenerate: () => void;
+  reflectionRef?: React.Ref<HTMLDivElement>;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  const r = entry.result;
+  const flagColor = r.flag_color;
+
+  const tintWrap =
+    flagColor === "green"
+      ? "from-flag-green-soft/45 via-card/85 to-card/70 border-flag-green/25"
+      : flagColor === "red"
+        ? "from-flag-red-soft/45 via-card/85 to-card/70 border-flag-red/25"
+        : "from-flag-yellow-soft/40 via-card/85 to-card/70 border-flag-yellow/25";
+
+  const glow =
+    flagColor === "green"
+      ? "bg-flag-green-soft/40"
+      : flagColor === "red"
+        ? "bg-flag-red-soft/40"
+        : "bg-flag-yellow-soft/35";
+
+  return (
+    <div ref={reflectionRef} className="flex justify-start scroll-mt-6">
+      <div className="w-full max-w-[96%]">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/70 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" /> {UI.reflection}
+          </div>
+          <button
+            onClick={onRegenerate}
+            disabled={busy}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60 disabled:opacity-60"
+            title={UI.regenerate}
+          >
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+            {UI.regenerate}
+          </button>
+        </div>
+
+        <div className={`relative overflow-hidden rounded-3xl rounded-tl-md border bg-gradient-to-br ${tintWrap} backdrop-blur-sm shadow-[0_6px_28px_-18px_rgba(180,140,150,0.35)]`}>
+          <div className={`pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full blur-3xl opacity-70 ${glow}`} />
+
+          {/* Compact header — always visible */}
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="relative w-full text-left p-5 sm:p-6 group"
+            aria-expanded={open}
+          >
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <FlagBadge label={r.flag} kind={r.flag_color} size="sm" />
+                  <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/8 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.15em] text-primary">
+                    {r.pattern_tag}
+                  </span>
+                </div>
+                <p className="font-display text-[1.05rem] leading-snug text-foreground/90">
+                  {r.summary}
+                </p>
+                {r.reality_check && !open && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 italic">
+                    “{r.reality_check}”
+                  </p>
+                )}
+              </div>
+              <div className={`mt-1 shrink-0 rounded-full border border-border/50 bg-background/60 p-1.5 text-muted-foreground transition group-hover:text-foreground ${open ? "rotate-180" : ""}`}>
+                <ChevronDown className="h-3.5 w-3.5" />
+              </div>
             </div>
-            <button
-              onClick={regenerateOnly}
-              disabled={busy}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60 disabled:opacity-60"
-              aria-label={UI.regenerate}
-              title={UI.regenerate}
-            >
-              {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-              {UI.regenerate}
-            </button>
-          </div>
-          <div className="rounded-3xl rounded-tl-md border border-border/50 bg-card/70 p-5 sm:p-6 shadow-sm backdrop-blur-sm">
-            <ResultCards result={entry.result} variant={entry.mode} />
-          </div>
+            {!open && (
+              <div className="mt-3 text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground/80">
+                Tap to unfold full reflection
+              </div>
+            )}
+          </button>
+
+          {/* Expanded full analysis */}
+          {open && (
+            <div className="relative border-t border-border/40 bg-card/40 p-5 sm:p-6 animate-in fade-in slide-in-from-top-1 duration-300">
+              <ResultCards result={entry.result} variant={entry.mode} />
+            </div>
+          )}
         </div>
       </div>
     </div>
