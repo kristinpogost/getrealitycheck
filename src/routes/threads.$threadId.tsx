@@ -247,7 +247,7 @@ function ThreadView({
                 <button
                   onClick={() => setEditing(true)}
                   className="rounded-full p-1.5 text-muted-foreground/60 hover:text-foreground hover:bg-card/60 opacity-60 group-hover:opacity-100 transition"
-                  aria-label="Rename"
+                  aria-label={UI.rename}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
