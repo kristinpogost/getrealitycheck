@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useUi } from "@/lib/ui-i18n";
 
 export function ScreenshotGallery({
   images,
@@ -10,6 +11,7 @@ export function ScreenshotGallery({
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const ui = useUi();
 
   if (!images || images.length === 0) return null;
 
@@ -64,7 +66,7 @@ export function ScreenshotGallery({
         )}
         {images.length > 1 && (
           <div className="mt-1 text-right text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-            {images.length} screenshots · tap to enlarge
+            {images.length} · {ui.tapToEnlarge}
           </div>
         )}
       </div>

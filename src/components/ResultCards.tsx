@@ -1,5 +1,5 @@
 import { FlagBadge, type FlagKind } from "./FlagBadge";
-import { Sparkles, Tag, Send, Heart, Repeat, Smile, Clock } from "lucide-react";
+import { Sparkles, Send, Heart, Repeat, Smile, Clock } from "lucide-react";
 
 export type UiLabels = {
   summary_title: string;
@@ -140,20 +140,8 @@ export function ResultCards({
 
   return (
     <div className="grid gap-7 sm:gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {/* Pattern tag */}
-      <div className="flex items-center justify-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/8 px-3.5 py-1 text-[0.72rem] font-medium uppercase tracking-[0.15em] text-primary">
-          <Tag className="h-3 w-3" />
-          {result.pattern_tag}
-        </span>
-      </div>
-
-      {/* Summary */}
-      <SoftCard label={l.summary_title} tint="blush" bubble={bubble}>
-        <p className="leading-relaxed font-display text-[1.1rem] text-foreground/90">
-          {result.summary}
-        </p>
-      </SoftCard>
+      {/* Summary + pattern_tag are already shown in the compact preview / memory card.
+          Skip them here so the expanded reflection flows directly into deeper analysis. */}
 
       {/* FLAG — focal point + reasoning */}
       <div className="relative flex flex-col items-center gap-3 py-4">

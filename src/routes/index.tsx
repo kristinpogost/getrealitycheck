@@ -8,26 +8,13 @@ import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
 import { latestEntry, type PersonThread } from "@/lib/threads";
 import { fetchThreads, createPersonDb, migrateLocalIfNeeded } from "@/lib/db";
+import { useUi } from "@/lib/ui-i18n";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const UI = {
-  appTagline: "A quiet space to reflect on what's happening — and what it might mean.",
-  people: "People",
-  newPerson: "New person",
-  noPeople: "No threads yet. Start by adding someone you want to reflect on.",
-  newThreadTitle: "Who is this about?",
-  newThreadHint: "Use a name, nickname, or label — only you see this.",
-  namePlaceholder: "e.g. Alex, M., the new coworker",
-  cancel: "Cancel",
-  start: "Start thread",
-  lastInteraction: "Last reflection",
-  entries: "entries",
-  entry: "entry",
-  disclaimer: "This tool offers reflection, not absolute truth.",
-};
+// strings come from useUi()
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
@@ -37,6 +24,7 @@ function formatTime(ts: number) {
 
 function Index() {
   const navigate = useNavigate();
+  const UI = useUi();
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [threads, setThreads] = useState<PersonThread[]>([]);
@@ -110,16 +98,16 @@ function Index() {
             onClick={signOut}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-card/60 transition"
           >
-            <LogOut className="h-3 w-3" /> Sign out
+            <LogOut className="h-3 w-3" /> {UI.signOut}
           </button>
         </div>
 
         <header className="mb-10 text-center">
           <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-sm">
-            <Sparkles className="h-3 w-3 text-primary" /> Reality Check
+            <Sparkles className="h-3 w-3 text-primary" /> {UI.appBadge}
           </div>
           <h1 className="text-4xl sm:text-5xl font-display font-light text-foreground tracking-tight leading-[1.05]">
-            A softer kind <span className="italic font-normal text-primary/90">of clarity</span>
+            {UI.appHeadline1} <span className="italic font-normal text-primary/90">{UI.appHeadline2}</span>
           </h1>
           <p className="mt-4 text-muted-foreground max-w-md mx-auto leading-relaxed font-light text-sm sm:text-base">
             {UI.appTagline}
@@ -182,7 +170,7 @@ function Index() {
                             </p>
                           </>
                         ) : (
-                          <p className="text-sm italic text-muted-foreground">No entries yet — open to add the first reflection.</p>
+                          <p className="text-sm italic text-muted-foreground">{UI.noEntriesShort}</p>
                         )}
                       </div>
                     </Link>
@@ -211,6 +199,7 @@ function Index() {
 function NewPersonModal({
   onCancel, onCreate,
 }: { onCancel: () => void; onCreate: (name: string) => void }) {
+  const UI = useUi();
   const [name, setName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { inputRef.current?.focus(); }, []);

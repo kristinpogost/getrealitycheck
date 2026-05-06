@@ -16,6 +16,7 @@ import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/l
 import {
   fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb,
 } from "@/lib/db";
+import { useUi, setStoredLang } from "@/lib/ui-i18n";
 
 export const Route = createFileRoute("/threads/$threadId")({
   component: ThreadPage,
@@ -23,32 +24,7 @@ export const Route = createFileRoute("/threads/$threadId")({
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-const UI = {
-  people: "People",
-  modeSituation: "Situation",
-  modeMessage: "Conversation",
-  placeholderSituation: "Describe what happened or add screenshots (any language)",
-  placeholderMessage: "Paste the conversation or add screenshots (any language)",
-  placeholderContinue: "Add what happened next, or drop in new screenshots...",
-  uploadHint: "Paste screenshots (Ctrl+V), drag & drop, or upload images",
-  uploadSubhint: "PNG, JPG — add as many as you need. Screenshots are the main input.",
-  analyze: "Reflect",
-  analyzing: "Reflecting...",
-  empty: "Please share a little more to reflect on.",
-  error: "Something went off course. Please try again.",
-  imageTooLarge: "Image is too large (max 8MB).",
-  entries: "entries",
-  entry: "entry",
-  deleteThread: "Delete thread",
-  confirmDelete: "Delete this entire thread? This cannot be undone.",
-  yourEntry: "You",
-  reflection: "Reflection",
-  threadStart: "Thread started",
-  edit: "Edit",
-  save: "Save & regenerate",
-  cancel: "Cancel",
-  regenerate: "Regenerate",
-};
+// strings come from useUi()
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
@@ -72,6 +48,7 @@ function fileToDataUrl(file: File): Promise<string> {
 function ThreadPage() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
+  const UI = useUi();
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [thread, setThread] = useState<PersonThread | null>(null);
@@ -162,7 +139,7 @@ function ThreadPage() {
     return (
       <div className="min-h-screen px-4 py-14">
         <div className="mx-auto w-full max-w-2xl rounded-2xl border border-border/60 bg-card/70 p-6 text-center text-muted-foreground">
-          Thread not found. <Link to="/" className="text-primary underline">Go back</Link>
+          {UI.threadNotFound} <Link to="/" className="text-primary underline">{UI.goBack}</Link>
         </div>
       </div>
     );
@@ -197,6 +174,7 @@ function ThreadView({
   onDelete: () => void;
   onRename: (name: string) => void;
 }) {
+  const UI = useUi();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(thread.name);
   useEffect(() => { setDraftName(thread.name); }, [thread.name, thread.id]);
@@ -258,7 +236,7 @@ function ThreadView({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={commitRename}
                   className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-card/60"
-                  aria-label="Save name"
+                  aria-label={UI.saveName}
                 >
                   <Check className="h-4 w-4" />
                 </button>
@@ -269,7 +247,7 @@ function ThreadView({
                 <button
                   onClick={() => setEditing(true)}
                   className="rounded-full p-1.5 text-muted-foreground/60 hover:text-foreground hover:bg-card/60 opacity-60 group-hover:opacity-100 transition"
-                  aria-label="Rename"
+                  aria-label={UI.rename}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
@@ -282,7 +260,7 @@ function ThreadView({
           {trend && (
             <div className="flex flex-col items-end gap-1">
               <TrendBadge trend={trend} />
-              <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">overall trend</span>
+              <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">{UI.overallTrend}</span>
             </div>
           )}
         </div>
@@ -300,7 +278,7 @@ function ThreadView({
       <div className="space-y-6">
         {thread.entries.length === 0 && (
           <div className="rounded-3xl border border-dashed border-border/60 bg-card/40 p-8 text-center text-sm text-muted-foreground">
-            No entries yet. Share the first situation or message above.
+            {UI.noEntriesYet}
           </div>
         )}
         {reversed.map((e, i) => {
@@ -343,6 +321,7 @@ function TimelineEntry({
   reflectionRef?: React.Ref<HTMLDivElement>;
   forceReflectionOpen?: boolean;
 }) {
+  const UI = useUi();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(entry.userInput);
   const [draftImages, setDraftImages] = useState<string[]>(entry.images ?? []);
@@ -400,7 +379,7 @@ function TimelineEntry({
   const saveAndRegenerate = async () => {
     const trimmed = draft.trim();
     if (trimmed.length < 3 && draftImages.length === 0) {
-      toast.error("Please keep at least a few words or one screenshot.");
+      toast.error(UI.keepFewWords);
       return;
     }
     setBusy(true);
@@ -430,12 +409,13 @@ function TimelineEntry({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const result = data as AnalysisResult;
+      if (result?.language) setStoredLang(result.language);
 
       const imagesForDb = draftImages.length > 0 ? draftImages : null;
       await updateEntryDb(entry.id, { userInput: trimmed, images: imagesForDb, result });
       onUpdated({ ...entry, userInput: trimmed, images: imagesForAi, result });
       setIsEditing(false);
-      toast.success("Reflection updated.");
+      toast.success(UI.reflectionUpdated);
     } catch (e: any) {
       toast.error(e?.message || UI.error);
     } finally {
@@ -469,9 +449,10 @@ function TimelineEntry({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const result = data as AnalysisResult;
+      if (result?.language) setStoredLang(result.language);
       await updateEntryDb(entry.id, { result });
       onUpdated({ ...entry, result });
-      toast.success("Regenerated.");
+      toast.success(UI.regenerated);
     } catch (e: any) {
       toast.error(e?.message || UI.error);
     } finally {
@@ -550,9 +531,9 @@ function TimelineEntry({
                 >
                   <ImagePlus className="h-4 w-4 text-primary/70" />
                   <div className="text-[0.7rem] font-medium text-foreground">
-                    {draftImages.length > 0 ? "Add more screenshots" : "Add screenshots"}
+                    {draftImages.length > 0 ? UI.addMoreScreenshots : UI.addScreenshots}
                   </div>
-                  <div className="text-[0.6rem] text-muted-foreground">Paste, drag, or click</div>
+                  <div className="text-[0.6rem] text-muted-foreground">{UI.pasteDragClick}</div>
                   <input
                     ref={editFileInputRef}
                     type="file"
@@ -568,7 +549,7 @@ function TimelineEntry({
 
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[0.65rem] text-muted-foreground">
-                    {draft.length}/4000{draftImages.length > 0 ? ` · ${draftImages.length} image${draftImages.length > 1 ? "s" : ""}` : ""}
+                    {draft.length}/4000{draftImages.length > 0 ? ` · ${draftImages.length} ${draftImages.length === 1 ? UI.image : UI.images}` : ""}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -631,6 +612,7 @@ function ReflectionCard({
   reflectionRef?: React.Ref<HTMLDivElement>;
   defaultOpen?: boolean;
 }) {
+  const UI = useUi();
   const [open, setOpen] = useState(!!defaultOpen);
   const r = entry.result;
   const flagColor = r.flag_color;
@@ -700,7 +682,7 @@ function ReflectionCard({
             </div>
             {!open && (
               <div className="mt-3 text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground/80">
-                Tap to unfold full reflection
+                {UI.tapToUnfold}
               </div>
             )}
           </button>
@@ -725,6 +707,7 @@ function ExpandedReflection({
   busy: boolean;
   onRegenerate: () => void;
 }) {
+  const UI = useUi();
   const r = entry.result;
   const flagColor = r.flag_color;
   const tintWrap =
@@ -774,6 +757,7 @@ function Composer({
   onSubmitted: (entry: ThreadEntry) => void;
   continueMode: boolean;
 }) {
+  const UI = useUi();
   const [mode, setMode] = useState<Mode>("situation");
   const [text, setText] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -854,6 +838,7 @@ function Composer({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const res = data as AnalysisResult;
+      if (res?.language) setStoredLang(res.language);
 
       const imagesToSave = hasImages ? images : undefined;
       const entry = await addEntryDb(userId, thread.id, {
@@ -899,7 +884,7 @@ function Composer({
           })}
         </div>
         <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-          {continueMode ? "continuing thread" : "first entry"}
+          {continueMode ? UI.continuingThread : UI.firstEntry}
         </span>
       </div>
 
@@ -973,7 +958,7 @@ function Composer({
 
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">
-          {text.length}/4000{images.length > 0 ? ` · ${images.length} image${images.length > 1 ? "s" : ""}` : ""}
+          {text.length}/4000{images.length > 0 ? ` · ${images.length} ${images.length === 1 ? UI.image : UI.images}` : ""}
         </span>
         <button
           onClick={analyze}
@@ -997,6 +982,7 @@ function MemoryCard({
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
 }) {
+  const UI = useUi();
   const [open, setOpen] = useState(false);
   const r = entry.result;
   const flagColor = r.flag_color;
