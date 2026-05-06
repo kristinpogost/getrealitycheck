@@ -14,6 +14,10 @@ type PriorEntry = {
   flag: string;
   flag_color: "green" | "yellow" | "red";
   pattern_tag?: string;
+  communication_dynamic?: string;
+  pattern_over_time?: string;
+  reality_check?: string;
+  hadImages?: boolean;
 };
 
 serve(async (req) => {
@@ -26,7 +30,7 @@ serve(async (req) => {
 
     const hasText = typeof text === "string" && text.trim().length >= 3;
     const hasImages = Array.isArray(images) && images.length > 0;
-    const priors: PriorEntry[] = Array.isArray(priorEntries) ? priorEntries.slice(-8) : [];
+    const priors: PriorEntry[] = Array.isArray(priorEntries) ? priorEntries.slice(-20) : [];
     const hasPriors = priors.length > 0;
 
     if (!hasText && !hasImages) {
@@ -133,6 +137,17 @@ Each line: under 12 words, observational, specific to what you see. If something
 
 THREAD CONTEXT: ${hasPriors ? `This is a CONTINUING thread${personName ? ` about "${personName}"` : ""}. ${priors.length} prior entries below. Compare actively, but only call something a pattern if it actually repeats — one new data point is not a trend.` : `FIRST entry${personName ? ` about "${personName}"` : ""}. No prior history yet.`}
 
+WHOLE-THREAD SYNTHESIS (CRITICAL — this is your primary lens)
+- You are a relationship pattern interpreter and emotional timeline analyzer — NOT a screenshot caption generator or single-message analyzer.
+- The new entry is ONE moment in a longer story. Your job is to read it inside the full arc of every prior entry.
+- Actively trace EVOLUTION across the thread: how did communication start, and how has it shifted? Look for movements like: formal → casual → emotionally open; strangers → acquaintances → friends → mutual interest; surface small-talk → vulnerability → late-night depth; one-sided effort → reciprocal curiosity → mutual investment; platform shifts (work chat → Instagram → DMs → calls → meeting in person) as signals of escalating familiarity.
+- Recognize gradual escalation of closeness, mutual curiosity, comfort, and emotional pacing. Connect events into ONE evolving story, not isolated incidents.
+- Recognize repeated emotional patterns (recurring warmth, recurring withdrawal, recurring playfulness, recurring avoidance) — name them only when they actually recur across multiple entries.
+- Synthesize ALL of: the user's written backstory, every prior interaction, emotional pacing over time, earlier reflections, screenshots, message tone, recurring themes. Do NOT over-prioritize the newest screenshot.
+- Screenshots are EVIDENCE that supports the long-arc reading. They do not replace it. If the newest screenshot looks neutral but the thread shows months of growing closeness, the closeness is the real signal.
+- When the arc shows clear progression (e.g. formal work talk → friendly calls → Instagram follow → Tinder match → 2-hour late-night conversation), name it explicitly as gradual escalation of emotional familiarity and mutual curiosity.
+- Default to continuity: assume today is part of the same story as yesterday unless something genuinely breaks the pattern.
+
 WHAT'S CHANGING
 ${hasPriors ? `2 short sentences naming any real shift across entries. If nothing has clearly shifted, say so plainly ("not much has changed — the warmth from before is still there"). Do NOT invent a decline from a single quieter moment.` : `Since this is your first entry, write one short, gentle line in the detected language — something like "Patterns will start to show as you add more here." Do not invent a comparison.`}
 
@@ -159,17 +174,29 @@ Use the provided tool to structure the response.`;
 
     let priorBlock = "";
     if (hasPriors) {
-      priorBlock = `\n\nPRIOR ENTRIES IN THIS THREAD${personName ? ` (about ${personName})` : ""}, oldest first:\n` +
+      const first = priors[0];
+      const last = priors[priors.length - 1];
+      const spanDays = Math.max(0, Math.round((last.createdAt - first.createdAt) / 86400000));
+      priorBlock = `\n\n=== FULL THREAD HISTORY${personName ? ` (about ${personName})` : ""} — ${priors.length} prior entries spanning ~${spanDays} day(s), oldest first ===\n` +
         priors.map((p, i) => {
           const d = new Date(p.createdAt).toISOString().slice(0, 10);
-          return `[${i + 1}] ${d} · ${p.mode} · flag: ${p.flag}${p.pattern_tag ? ` · tag: ${p.pattern_tag}` : ""}\n  shared: ${p.userInput.slice(0, 600)}\n  summary: ${p.summary}`;
-        }).join("\n\n") + "\n";
+          const parts = [
+            `[${i + 1}] ${d} · ${p.mode}${p.hadImages ? " · had screenshots" : ""} · flag: ${p.flag}${p.pattern_tag ? ` · tag: ${p.pattern_tag}` : ""}`,
+            `  user shared: ${p.userInput.slice(0, 700)}`,
+            `  prior summary: ${p.summary}`,
+          ];
+          if (p.communication_dynamic) parts.push(`  prior dynamic: ${p.communication_dynamic.slice(0, 300)}`);
+          if (p.pattern_over_time) parts.push(`  prior pattern read: ${p.pattern_over_time.slice(0, 300)}`);
+          if (p.reality_check) parts.push(`  prior reality check: ${p.reality_check.slice(0, 200)}`);
+          return parts.join("\n");
+        }).join("\n\n") +
+        `\n=== END THREAD HISTORY ===\n\nIMPORTANT: The new entry below is ONE moment in this longer story. Read it through the lens of everything above. Trace how the dynamic has evolved (formal → casual → emotionally open, distance → closeness, curiosity building, comfort growing, etc.). Screenshots in the new entry SUPPORT the bigger picture — they do not replace it.\n`;
     }
 
     if (hasText) {
-      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY ---\n${text}\n---` });
+      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY (latest moment in the thread) ---\n${text}\n---` });
     } else {
-      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\nI uploaded chat screenshot(s) — read the visible conversation.` });
+      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY (latest moment in the thread) ---\nThe user uploaded chat screenshot(s) — read them, but interpret them as the next chapter of the thread above, not as an isolated moment.` });
     }
     if (hasImages) {
       for (const img of images) {
