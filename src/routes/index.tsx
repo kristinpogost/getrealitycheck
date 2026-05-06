@@ -98,16 +98,16 @@ function Index() {
             onClick={signOut}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-card/60 transition"
           >
-            <LogOut className="h-3 w-3" /> Sign out
+            <LogOut className="h-3 w-3" /> {UI.signOut}
           </button>
         </div>
 
         <header className="mb-10 text-center">
           <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/70 px-3.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted-foreground backdrop-blur-sm">
-            <Sparkles className="h-3 w-3 text-primary" /> Reality Check
+            <Sparkles className="h-3 w-3 text-primary" /> {UI.appBadge}
           </div>
           <h1 className="text-4xl sm:text-5xl font-display font-light text-foreground tracking-tight leading-[1.05]">
-            A softer kind <span className="italic font-normal text-primary/90">of clarity</span>
+            {UI.appHeadline1} <span className="italic font-normal text-primary/90">{UI.appHeadline2}</span>
           </h1>
           <p className="mt-4 text-muted-foreground max-w-md mx-auto leading-relaxed font-light text-sm sm:text-base">
             {UI.appTagline}
