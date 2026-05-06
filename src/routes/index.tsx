@@ -558,7 +558,7 @@ function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) 
       </div>
 
       {/* AI reflection — left aligned */}
-      <div className="flex justify-start">
+      <div ref={reflectionRef} className="flex justify-start scroll-mt-6">
         <div className="w-full max-w-[96%]">
           <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/70 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" /> {UI.reflection}
