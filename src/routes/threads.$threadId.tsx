@@ -334,13 +334,14 @@ function ThreadView({
 
 /* ---------- Timeline entry ---------- */
 function TimelineEntry({
-  entry, index, thread, onUpdated, reflectionRef,
+  entry, index, thread, onUpdated, reflectionRef, forceReflectionOpen,
 }: {
   entry: ThreadEntry;
   index: number;
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
   reflectionRef?: React.Ref<HTMLDivElement>;
+  forceReflectionOpen?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(entry.userInput);
