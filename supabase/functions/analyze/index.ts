@@ -193,7 +193,7 @@ Use the provided tool to structure the response.`;
             communication_dynamic: { type: "string", description: "1–2 sentences on the interaction style, addressed to you." },
             hidden_signals: { type: "string", description: "2–3 sentences on what's implied but unsaid — tone, timing, effort, emotional availability." },
             intentions: { type: "string", description: "1–2 possible interpretations of their behavior, framed as possibilities." },
-            flag: { type: "string", description: "Translated 'Green flag' / 'Mixed signals' / 'Red flag'." },
+            flag: { type: "string", description: "Translated label using the FLAG metaphor (never 'signal' or 'sign'). English: 'Green flag' / 'Yellow flag' / 'Red flag'. Estonian (MUST be exactly): 'Roheline lipp' / 'Kollane lipp' / 'Punane lipp'. Other languages: use the local equivalent of 'flag' consistently — never mix 'signal' / 'sign' / 'flag' terminology." },
             flag_color: { type: "string", enum: ["green", "yellow", "red"] },
             flag_reasoning: { type: "string", description: "1–2 sentences explaining WHY the flag — grounded in consistency, effort, clarity vs. confusion, or respect for boundaries. Specific to what was shared." },
             signal_breakdown: {
