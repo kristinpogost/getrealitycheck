@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText,
-  Plus, ArrowLeft, User, LogOut,
+  Plus, ArrowLeft, User, LogOut, Pencil, Check,
 } from "lucide-react";
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
 import { FlagBadge } from "@/components/FlagBadge";
@@ -13,7 +13,7 @@ import { TrendBadge } from "@/components/TrendBadge";
 import { ScreenshotGallery } from "@/components/ScreenshotGallery";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
 import {
-  fetchThreads, createPersonDb, addEntryDb, deletePersonDb, migrateLocalIfNeeded,
+  fetchThreads, createPersonDb, addEntryDb, deletePersonDb, migrateLocalIfNeeded, renamePersonDb,
 } from "@/lib/db";
 
 export const Route = createFileRoute("/")({
