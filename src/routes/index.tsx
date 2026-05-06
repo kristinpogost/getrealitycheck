@@ -146,6 +146,19 @@ function Index() {
     }
   };
 
+  const renameThread = async (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const prev = threads;
+    setThreads((p) => p.map((t) => (t.id === id ? { ...t, name: trimmed } : t)));
+    try {
+      await renamePersonDb(id, trimmed);
+    } catch (e: any) {
+      setThreads(prev);
+      toast.error(e?.message || "Failed to rename");
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth" });
