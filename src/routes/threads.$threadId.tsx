@@ -16,7 +16,7 @@ import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/l
 import {
   fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb,
 } from "@/lib/db";
-import { useUi, setStoredLang, type UiStrings } from "@/lib/ui-i18n";
+import { useUi, setStoredLang } from "@/lib/ui-i18n";
 
 export const Route = createFileRoute("/threads/$threadId")({
   component: ThreadPage,
