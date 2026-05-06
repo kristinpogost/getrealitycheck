@@ -171,6 +171,22 @@ function ThreadPage() {
     setThread((t) => t ? { ...t, entries: t.entries.map((e) => e.id === entry.id ? entry : e) } : t);
   };
 
+  const onEntryDeleted = async (entryId: string) => {
+    if (!thread) return;
+    if (!confirm(UI.confirmDeleteEntry)) return false;
+    const prev = thread;
+    setThread({ ...thread, entries: thread.entries.filter((e) => e.id !== entryId) });
+    try {
+      await deleteEntryDb(entryId);
+      toast.success(UI.entryDeleted);
+      return true;
+    } catch (e: any) {
+      setThread(prev);
+      toast.error(e?.message || "Failed to delete");
+      return false;
+    }
+  };
+
   if (!authChecked || !userId || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
