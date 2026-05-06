@@ -135,6 +135,9 @@ export const UI_STRINGS = {
     images: "pilti",
     showMore: "Näita rohkem",
     showLess: "Näita vähem",
+    deleteEntry: "Kustuta sissekanne",
+    confirmDeleteEntry: "Kustutada see sissekanne ja peegeldus? Seda ei saa tagasi võtta.",
+    entryDeleted: "Sissekanne kustutatud.",
   },
 } as const;
 
