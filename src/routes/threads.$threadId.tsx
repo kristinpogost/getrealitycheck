@@ -705,6 +705,7 @@ function ExpandedReflection({
   busy: boolean;
   onRegenerate: () => void;
 }) {
+  const UI = useUi();
   const r = entry.result;
   const flagColor = r.flag_color;
   const tintWrap =
