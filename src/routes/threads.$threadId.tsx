@@ -139,7 +139,7 @@ function ThreadPage() {
     return (
       <div className="min-h-screen px-4 py-14">
         <div className="mx-auto w-full max-w-2xl rounded-2xl border border-border/60 bg-card/70 p-6 text-center text-muted-foreground">
-          Thread not found. <Link to="/" className="text-primary underline">Go back</Link>
+          {UI.threadNotFound} <Link to="/" className="text-primary underline">{UI.goBack}</Link>
         </div>
       </div>
     );
