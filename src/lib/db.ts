@@ -95,6 +95,16 @@ export async function deletePersonDb(personId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function renamePersonDb(personId: string, name: string): Promise<void> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Name cannot be empty");
+  const { error } = await supabase
+    .from("people")
+    .update({ name: trimmed })
+    .eq("id", personId);
+  if (error) throw error;
+}
+
 export async function migrateLocalIfNeeded(userId: string): Promise<boolean> {
   try {
     if (localStorage.getItem(MIGRATION_KEY)) return false;
