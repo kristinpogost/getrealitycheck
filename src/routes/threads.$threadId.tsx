@@ -1038,12 +1038,13 @@ function Composer({
 
 /* ---------- Memory card (compact preview → modal) ---------- */
 function MemoryCard({
-  entry, index, thread, onUpdated,
+  entry, index, thread, onUpdated, onDeleted,
 }: {
   entry: ThreadEntry;
   index: number;
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
+  onDeleted?: (entryId: string) => Promise<boolean | void>;
 }) {
   const UI = useUi();
   const [open, setOpen] = useState(false);
