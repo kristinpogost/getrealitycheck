@@ -525,7 +525,7 @@ function ThreadView({
 }
 
 /* ---------- Timeline entry (chat-style) ---------- */
-function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) {
+function TimelineEntry({ entry, index, reflectionRef }: { entry: ThreadEntry; index: number; reflectionRef?: React.Ref<HTMLDivElement> }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
