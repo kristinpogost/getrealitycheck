@@ -331,19 +331,66 @@ function TimelineEntry({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(entry.userInput);
+  const [draftImages, setDraftImages] = useState<string[]>(entry.images ?? []);
+  const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setDraft(entry.userInput); }, [entry.userInput, entry.id]);
+  useEffect(() => { setDraftImages(entry.images ?? []); }, [entry.images, entry.id]);
+
+  const addEditFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const next: string[] = [];
+    for (const f of arr) {
+      if (f.size > MAX_IMAGE_BYTES) {
+        toast.error(`${f.name}: ${UI.imageTooLarge}`);
+        continue;
+      }
+      try { next.push(await fileToDataUrl(f)); } catch {}
+    }
+    if (next.length) setDraftImages((prev) => [...prev, ...next]);
+  };
+
+  // Paste support while editing
+  useEffect(() => {
+    if (!isEditing) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const it of Array.from(items)) {
+        if (it.kind === "file") {
+          const f = it.getAsFile();
+          if (f && f.type.startsWith("image/")) files.push(f);
+        }
+      }
+      if (files.length) {
+        e.preventDefault();
+        addEditFiles(files);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [isEditing]);
+
+  const removeDraftImage = (i: number) =>
+    setDraftImages((prev) => prev.filter((_, idx) => idx !== i));
+
+  const cancelEdit = () => {
+    setDraft(entry.userInput);
+    setDraftImages(entry.images ?? []);
+    setIsEditing(false);
+  };
 
   const saveAndRegenerate = async () => {
     const trimmed = draft.trim();
-    if (trimmed.length < 3 && !(entry.images && entry.images.length > 0)) {
-      toast.error("Please keep at least a few words.");
+    if (trimmed.length < 3 && draftImages.length === 0) {
+      toast.error("Please keep at least a few words or one screenshot.");
       return;
     }
     setBusy(true);
     try {
-      // Build prior entries excluding THIS one (so the AI sees this as a fresh take)
       const priorEntries = thread.entries
         .filter((e) => e.id !== entry.id && e.createdAt < entry.createdAt)
         .map((e) => ({
@@ -356,11 +403,12 @@ function TimelineEntry({
           pattern_tag: e.result.pattern_tag,
         }));
 
+      const imagesForAi = draftImages.length > 0 ? draftImages : undefined;
       const { data, error } = await supabase.functions.invoke("analyze", {
         body: {
           text: trimmed,
           mode: entry.mode,
-          images: entry.images,
+          images: imagesForAi,
           personName: thread.name,
           priorEntries,
         },
@@ -369,8 +417,9 @@ function TimelineEntry({
       if ((data as any)?.error) throw new Error((data as any).error);
       const result = data as AnalysisResult;
 
-      await updateEntryDb(entry.id, { userInput: trimmed, result });
-      onUpdated({ ...entry, userInput: trimmed, result });
+      const imagesForDb = draftImages.length > 0 ? draftImages : null;
+      await updateEntryDb(entry.id, { userInput: trimmed, images: imagesForDb, result });
+      onUpdated({ ...entry, userInput: trimmed, images: imagesForAi, result });
       setIsEditing(false);
       toast.success("Reflection updated.");
     } catch (e: any) {
