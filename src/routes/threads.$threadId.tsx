@@ -92,6 +92,10 @@ function ThreadPage() {
   }, [authChecked, userId, navigate]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [threadId]);
+
+  useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     (async () => {
@@ -202,14 +206,10 @@ function ThreadView({
     setEditing(false);
   };
 
+  // Intentionally no auto-scroll on entry changes. Opening a thread starts at
+  // the top (input + upload area visible). After submitting, the composer stays
+  // in view and the new entry renders just below — no jumping to the AI output.
   const latestReflectionRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (thread.entries.length === 0) return;
-    const id = window.setTimeout(() => {
-      latestReflectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
-    return () => window.clearTimeout(id);
-  }, [thread.entries.length]);
 
   const last = latestEntry(thread);
   const trend = last?.result.trend;
