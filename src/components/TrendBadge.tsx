@@ -11,8 +11,8 @@ const LABELS: Record<"en" | "et", Record<Trend, string>> = {
     new: "New thread",
   },
   et: {
-    improving: "Areneb",
-    declining: "Hääbuv",
+    improving: "Tõusev",
+    declining: "Langev",
     inconsistent: "Ebaühtlane",
     stable: "Stabiilne",
     new: "Uus teema",
