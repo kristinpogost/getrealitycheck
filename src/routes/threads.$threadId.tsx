@@ -459,6 +459,10 @@ function TimelineEntry({
           flag: e.result.flag,
           flag_color: e.result.flag_color,
           pattern_tag: e.result.pattern_tag,
+          communication_dynamic: e.result.communication_dynamic,
+          pattern_over_time: e.result.pattern_over_time,
+          reality_check: e.result.reality_check,
+          hadImages: !!(e.images && e.images.length > 0),
         }));
 
       const imagesForAi = draftImages.length > 0 ? draftImages : undefined;
@@ -501,6 +505,10 @@ function TimelineEntry({
           flag: e.result.flag,
           flag_color: e.result.flag_color,
           pattern_tag: e.result.pattern_tag,
+          communication_dynamic: e.result.communication_dynamic,
+          pattern_over_time: e.result.pattern_over_time,
+          reality_check: e.result.reality_check,
+          hadImages: !!(e.images && e.images.length > 0),
         }));
       const { data, error } = await supabase.functions.invoke("analyze", {
         body: {
@@ -899,6 +907,10 @@ function Composer({
         flag: e.result.flag,
         flag_color: e.result.flag_color,
         pattern_tag: e.result.pattern_tag,
+        communication_dynamic: e.result.communication_dynamic,
+        pattern_over_time: e.result.pattern_over_time,
+        reality_check: e.result.reality_check,
+        hadImages: !!(e.images && e.images.length > 0),
       }));
 
       const { data, error } = await supabase.functions.invoke("analyze", {
