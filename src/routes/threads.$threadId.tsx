@@ -955,7 +955,7 @@ function Composer({
 
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">
-          {text.length}/4000{images.length > 0 ? ` · ${images.length} image${images.length > 1 ? "s" : ""}` : ""}
+          {text.length}/4000{images.length > 0 ? ` · ${images.length} ${images.length === 1 ? UI.image : UI.images}` : ""}
         </span>
         <button
           onClick={analyze}
