@@ -22,6 +22,23 @@ function formatTime(ts: number) {
   });
 }
 
+function LangToggle() {
+  const lang = useUiLang();
+  const next: "en" | "et" = lang === "et" ? "en" : "et";
+  return (
+    <button
+      onClick={() => setManualLang(next)}
+      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition"
+      aria-label="Language"
+      title={lang === "et" ? "Switch to English" : "Lülitu eesti keelele"}
+    >
+      <span className={lang === "en" ? "text-foreground" : ""}>EN</span>
+      <span className="opacity-40">/</span>
+      <span className={lang === "et" ? "text-foreground" : ""}>ET</span>
+    </button>
+  );
+}
+
 function Index() {
   const navigate = useNavigate();
   const UI = useUi();
