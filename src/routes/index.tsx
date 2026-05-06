@@ -14,21 +14,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const UI = {
-  appTagline: "A quiet space to reflect on what's happening — and what it might mean.",
-  people: "People",
-  newPerson: "New person",
-  noPeople: "No threads yet. Start by adding someone you want to reflect on.",
-  newThreadTitle: "Who is this about?",
-  newThreadHint: "Use a name, nickname, or label — only you see this.",
-  namePlaceholder: "e.g. Alex, M., the new coworker",
-  cancel: "Cancel",
-  start: "Start thread",
-  lastInteraction: "Last reflection",
-  entries: "entries",
-  entry: "entry",
-  disclaimer: "This tool offers reflection, not absolute truth.",
-};
+// strings come from useUi()
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
