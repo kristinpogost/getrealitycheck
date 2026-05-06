@@ -14,7 +14,7 @@ import { ScreenshotGallery } from "@/components/ScreenshotGallery";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
 import {
-  fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb,
+  fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb, deleteEntryDb,
 } from "@/lib/db";
 import { useUi, setStoredLang } from "@/lib/ui-i18n";
 
