@@ -174,6 +174,7 @@ function ThreadView({
   onDelete: () => void;
   onRename: (name: string) => void;
 }) {
+  const UI = useUi();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(thread.name);
   useEffect(() => { setDraftName(thread.name); }, [thread.name, thread.id]);
