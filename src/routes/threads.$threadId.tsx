@@ -5,12 +5,13 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText,
-  ArrowLeft, Pencil, Check, RefreshCw, ChevronDown,
+  ArrowLeft, Pencil, Check, RefreshCw, ChevronDown, Clock,
 } from "lucide-react";
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
 import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
 import { ScreenshotGallery } from "@/components/ScreenshotGallery";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
 import {
   fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb,
