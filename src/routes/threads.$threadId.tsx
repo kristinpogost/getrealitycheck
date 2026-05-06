@@ -541,13 +541,25 @@ function TimelineEntry({
           <div className="mb-1.5 flex items-center justify-end gap-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             <span>{UI.yourEntry} · {entry.mode === "message" ? UI.modeMessage : UI.modeSituation}</span>
             {!isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 normal-case tracking-normal text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60"
-                aria-label={UI.edit}
-              >
-                <Pencil className="h-3 w-3" /> {UI.edit}
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 normal-case tracking-normal text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60 transition"
+                  aria-label={UI.edit}
+                >
+                  <Pencil className="h-3 w-3" /> {UI.edit}
+                </button>
+                {onDeleted && (
+                  <button
+                    onClick={() => { void onDeleted(entry.id); }}
+                    className="inline-flex cursor-pointer items-center rounded-full p-1 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition"
+                    aria-label={UI.deleteEntry}
+                    title={UI.deleteEntry}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </>
             )}
           </div>
           <div className="rounded-3xl rounded-tr-md border border-primary/20 bg-gradient-to-br from-primary/12 via-primary/8 to-accent/15 px-5 py-4 shadow-sm">
