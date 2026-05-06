@@ -23,8 +23,45 @@ export const Route = createFileRoute("/threads/$threadId")({
 });
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const COLLAPSE_CHAR_THRESHOLD = 320;
 
 // strings come from useUi()
+
+function CollapsibleText({ text, UI }: { text: string; UI: ReturnType<typeof useUi> }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > COLLAPSE_CHAR_THRESHOLD;
+  if (!long) {
+    return (
+      <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">{text}</p>
+    );
+  }
+  return (
+    <div className="relative">
+      <div
+        className={`relative overflow-hidden transition-[max-height] duration-500 ease-out ${
+          open ? "max-h-[4000px]" : "max-h-32"
+        }`}
+      >
+        <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">{text}</p>
+        {!open && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card via-card/80 to-transparent" />
+        )}
+      </div>
+      <div className="mt-1 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="group inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          {open ? UI.showLess : UI.showMore}
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
