@@ -14,6 +14,10 @@ type PriorEntry = {
   flag: string;
   flag_color: "green" | "yellow" | "red";
   pattern_tag?: string;
+  communication_dynamic?: string;
+  pattern_over_time?: string;
+  reality_check?: string;
+  hadImages?: boolean;
 };
 
 serve(async (req) => {
