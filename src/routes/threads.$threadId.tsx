@@ -409,6 +409,7 @@ function TimelineEntry({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const result = data as AnalysisResult;
+      if (result?.language) setStoredLang(result.language);
 
       const imagesForDb = draftImages.length > 0 ? draftImages : null;
       await updateEntryDb(entry.id, { userInput: trimmed, images: imagesForDb, result });
