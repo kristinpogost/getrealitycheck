@@ -48,6 +48,7 @@ function fileToDataUrl(file: File): Promise<string> {
 function ThreadPage() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
+  const UI = useUi();
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [thread, setThread] = useState<PersonThread | null>(null);
