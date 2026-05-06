@@ -130,6 +130,8 @@ export const UI_STRINGS = {
     removeImage: "Eemalda pilt",
     image: "pilt",
     images: "pilti",
+    showMore: "Näita rohkem",
+    showLess: "Näita vähem",
   },
 } as const;
 
