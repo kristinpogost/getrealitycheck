@@ -11,6 +11,7 @@ export function ScreenshotGallery({
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const ui = useUi();
 
   if (!images || images.length === 0) return null;
 
