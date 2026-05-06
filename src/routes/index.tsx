@@ -204,7 +204,7 @@ function Index() {
               setThreads((prev) =>
                 prev.map((t) =>
                   t.id === currentThread.id
-                    ? { ...t, updatedAt: entry.createdAt, entries: [...t.entries, entry] }
+                    ? { ...t, updatedAt: entry.createdAt, entries: [entry, ...t.entries] }
                     : t,
                 ),
               );
