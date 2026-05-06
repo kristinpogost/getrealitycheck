@@ -90,6 +90,23 @@ export async function addEntryDb(
   };
 }
 
+export async function updateEntryDb(
+  entryId: string,
+  patch: { userInput?: string; images?: string[] | null; result?: AnalysisResult; mode?: Mode },
+): Promise<void> {
+  const update: any = {};
+  if (patch.userInput !== undefined) update.user_input = patch.userInput;
+  if (patch.images !== undefined) update.images = patch.images;
+  if (patch.mode !== undefined) update.mode = patch.mode;
+  if (patch.result !== undefined) {
+    update.result = patch.result as any;
+    update.flag = patch.result.flag ?? null;
+    update.summary = patch.result.summary ?? null;
+  }
+  const { error } = await supabase.from("entries").update(update).eq("id", entryId);
+  if (error) throw error;
+}
+
 export async function deletePersonDb(personId: string): Promise<void> {
   const { error } = await supabase.from("people").delete().eq("id", personId);
   if (error) throw error;
