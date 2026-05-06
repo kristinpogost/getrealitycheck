@@ -211,6 +211,7 @@ function Index() {
             }}
             onBack={goHome}
             onDelete={() => removeThread(currentThread.id)}
+            onRename={(name) => renameThread(currentThread.id, name)}
           />
         )}
 
