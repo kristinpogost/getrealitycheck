@@ -387,14 +387,26 @@ function NewPersonModal({
 
 /* ---------- Thread view ---------- */
 function ThreadView({
-  thread, userId, onEntryAdded, onBack, onDelete,
+  thread, userId, onEntryAdded, onBack, onDelete, onRename,
 }: {
   thread: PersonThread;
   userId: string;
   onEntryAdded: (entry: ThreadEntry) => void;
   onBack: () => void;
   onDelete: () => void;
+  onRename: (name: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(thread.name);
+  useEffect(() => { setDraftName(thread.name); }, [thread.name, thread.id]);
+
+  const commitRename = () => {
+    const trimmed = draftName.trim();
+    if (trimmed && trimmed !== thread.name) onRename(trimmed);
+    else setDraftName(thread.name);
+    setEditing(false);
+  };
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
