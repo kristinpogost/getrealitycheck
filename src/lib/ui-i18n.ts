@@ -131,7 +131,7 @@ export const UI_STRINGS = {
   },
 } as const;
 
-export type UiStrings = typeof UI_STRINGS["en"];
+export type UiStrings = { [K in keyof typeof UI_STRINGS["en"]]: string };
 
 function normalize(code: string | null | undefined): UiLang {
   if (!code) return "en";
