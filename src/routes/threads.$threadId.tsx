@@ -24,32 +24,7 @@ export const Route = createFileRoute("/threads/$threadId")({
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-const UI = {
-  people: "People",
-  modeSituation: "Situation",
-  modeMessage: "Conversation",
-  placeholderSituation: "Describe what happened or add screenshots (any language)",
-  placeholderMessage: "Paste the conversation or add screenshots (any language)",
-  placeholderContinue: "Add what happened next, or drop in new screenshots...",
-  uploadHint: "Paste screenshots (Ctrl+V), drag & drop, or upload images",
-  uploadSubhint: "PNG, JPG — add as many as you need. Screenshots are the main input.",
-  analyze: "Reflect",
-  analyzing: "Reflecting...",
-  empty: "Please share a little more to reflect on.",
-  error: "Something went off course. Please try again.",
-  imageTooLarge: "Image is too large (max 8MB).",
-  entries: "entries",
-  entry: "entry",
-  deleteThread: "Delete thread",
-  confirmDelete: "Delete this entire thread? This cannot be undone.",
-  yourEntry: "You",
-  reflection: "Reflection",
-  threadStart: "Thread started",
-  edit: "Edit",
-  save: "Save & regenerate",
-  cancel: "Cancel",
-  regenerate: "Regenerate",
-};
+// strings come from useUi()
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
