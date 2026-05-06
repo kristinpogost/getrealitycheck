@@ -10,6 +10,7 @@ import {
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
 import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
+import { ScreenshotGallery } from "@/components/ScreenshotGallery";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
 import {
   fetchThreads, createPersonDb, addEntryDb, deletePersonDb, migrateLocalIfNeeded,
@@ -477,10 +478,8 @@ function TimelineEntry({ entry, index }: { entry: ThreadEntry; index: number }) 
               </p>
             )}
             {entry.images && entry.images.length > 0 && (
-              <div className={`grid grid-cols-3 gap-2 ${entry.userInput ? "mt-3" : ""}`}>
-                {entry.images.map((src, i) => (
-                  <img key={i} src={src} alt="" className="aspect-square rounded-lg border border-border/40 object-cover" />
-                ))}
+              <div className={entry.userInput ? "mt-3" : ""}>
+                <ScreenshotGallery images={entry.images} thumbHeight={160} />
               </div>
             )}
           </div>
@@ -592,7 +591,7 @@ function Composer({
       if ((data as any)?.error) throw new Error((data as any).error);
       const res = data as AnalysisResult;
 
-      const imagesToSave = hasImages ? images.slice(0, 3) : undefined;
+      const imagesToSave = hasImages ? images : undefined;
       const entry = await addEntryDb(userId, thread.id, {
         mode,
         userInput: trimmed,
