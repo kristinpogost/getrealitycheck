@@ -1125,6 +1125,11 @@ function MemoryCard({
               index={index}
               thread={thread}
               onUpdated={(e) => { onUpdated(e); }}
+              onDeleted={onDeleted ? async (id) => {
+                const ok = await onDeleted(id);
+                if (ok !== false) setOpen(false);
+                return ok;
+              } : undefined}
               forceReflectionOpen
             />
           </div>
