@@ -260,7 +260,7 @@ function ThreadView({
           {trend && (
             <div className="flex flex-col items-end gap-1">
               <TrendBadge trend={trend} />
-              <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">overall trend</span>
+              <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">{UI.overallTrend}</span>
             </div>
           )}
         </div>
