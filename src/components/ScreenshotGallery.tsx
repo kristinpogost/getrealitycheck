@@ -66,7 +66,7 @@ export function ScreenshotGallery({
         )}
         {images.length > 1 && (
           <div className="mt-1 text-right text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-            {images.length} screenshots · tap to enlarge
+            {images.length} · {ui.tapToEnlarge}
           </div>
         )}
       </div>
