@@ -92,6 +92,10 @@ function ThreadPage() {
   }, [authChecked, userId, navigate]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [threadId]);
+
+  useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     (async () => {
