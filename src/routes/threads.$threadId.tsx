@@ -41,11 +41,18 @@ function CollapsibleText({ text, UI }: { text: string; UI: ReturnType<typeof use
         className={`relative overflow-hidden transition-[max-height] duration-500 ease-out ${
           open ? "max-h-[4000px]" : "max-h-32"
         }`}
+        style={
+          open
+            ? undefined
+            : {
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+                maskImage:
+                  "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              }
+        }
       >
         <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">{text}</p>
-        {!open && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card via-card/80 to-transparent" />
-        )}
       </div>
       <div className="mt-1 flex justify-end">
         <button
