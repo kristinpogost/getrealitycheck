@@ -107,6 +107,11 @@ export async function updateEntryDb(
   if (error) throw error;
 }
 
+export async function deleteEntryDb(entryId: string): Promise<void> {
+  const { error } = await supabase.from("entries").delete().eq("id", entryId);
+  if (error) throw error;
+}
+
 export async function deletePersonDb(personId: string): Promise<void> {
   const { error } = await supabase.from("people").delete().eq("id", personId);
   if (error) throw error;

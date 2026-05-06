@@ -68,6 +68,9 @@ export const UI_STRINGS = {
     images: "images",
     showMore: "Show more",
     showLess: "Show less",
+    deleteEntry: "Delete entry",
+    confirmDeleteEntry: "Delete this entry and its reflection? This cannot be undone.",
+    entryDeleted: "Entry deleted.",
   },
   et: {
     // Index page
@@ -132,6 +135,9 @@ export const UI_STRINGS = {
     images: "pilti",
     showMore: "Näita rohkem",
     showLess: "Näita vähem",
+    deleteEntry: "Kustuta sissekanne",
+    confirmDeleteEntry: "Kustutada see sissekanne ja peegeldus? Seda ei saa tagasi võtta.",
+    entryDeleted: "Sissekanne kustutatud.",
   },
 } as const;
 

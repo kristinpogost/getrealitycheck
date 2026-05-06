@@ -14,7 +14,7 @@ import { ScreenshotGallery } from "@/components/ScreenshotGallery";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
 import {
-  fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb,
+  fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb, deleteEntryDb,
 } from "@/lib/db";
 import { useUi, setStoredLang } from "@/lib/ui-i18n";
 
@@ -171,6 +171,22 @@ function ThreadPage() {
     setThread((t) => t ? { ...t, entries: t.entries.map((e) => e.id === entry.id ? entry : e) } : t);
   };
 
+  const onEntryDeleted = async (entryId: string) => {
+    if (!thread) return;
+    if (!confirm(UI.confirmDeleteEntry)) return false;
+    const prev = thread;
+    setThread({ ...thread, entries: thread.entries.filter((e) => e.id !== entryId) });
+    try {
+      await deleteEntryDb(entryId);
+      toast.success(UI.entryDeleted);
+      return true;
+    } catch (e: any) {
+      setThread(prev);
+      toast.error(e?.message || "Failed to delete");
+      return false;
+    }
+  };
+
   if (!authChecked || !userId || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -198,6 +214,7 @@ function ThreadPage() {
           userId={userId}
           onEntryAdded={onEntryAdded}
           onEntryUpdated={onEntryUpdated}
+          onEntryDeleted={onEntryDeleted}
           onBack={goBack}
           onDelete={onDelete}
           onRename={onRename}
@@ -208,12 +225,13 @@ function ThreadPage() {
 }
 
 function ThreadView({
-  thread, userId, onEntryAdded, onEntryUpdated, onBack, onDelete, onRename,
+  thread, userId, onEntryAdded, onEntryUpdated, onEntryDeleted, onBack, onDelete, onRename,
 }: {
   thread: PersonThread;
   userId: string;
   onEntryAdded: (entry: ThreadEntry) => void;
   onEntryUpdated: (entry: ThreadEntry) => void;
+  onEntryDeleted: (entryId: string) => Promise<boolean | void>;
   onBack: () => void;
   onDelete: () => void;
   onRename: (name: string) => void;
@@ -335,6 +353,7 @@ function ThreadView({
                 index={originalIndex}
                 thread={thread}
                 onUpdated={onEntryUpdated}
+                onDeleted={onEntryDeleted}
                 reflectionRef={latestReflectionRef}
               />
             );
@@ -346,6 +365,7 @@ function ThreadView({
               index={originalIndex}
               thread={thread}
               onUpdated={onEntryUpdated}
+              onDeleted={onEntryDeleted}
             />
           );
         })}
@@ -356,12 +376,13 @@ function ThreadView({
 
 /* ---------- Timeline entry ---------- */
 function TimelineEntry({
-  entry, index, thread, onUpdated, reflectionRef, forceReflectionOpen,
+  entry, index, thread, onUpdated, onDeleted, reflectionRef, forceReflectionOpen,
 }: {
   entry: ThreadEntry;
   index: number;
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
+  onDeleted?: (entryId: string) => Promise<boolean | void>;
   reflectionRef?: React.Ref<HTMLDivElement>;
   forceReflectionOpen?: boolean;
 }) {
@@ -520,13 +541,25 @@ function TimelineEntry({
           <div className="mb-1.5 flex items-center justify-end gap-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             <span>{UI.yourEntry} · {entry.mode === "message" ? UI.modeMessage : UI.modeSituation}</span>
             {!isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 normal-case tracking-normal text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60"
-                aria-label={UI.edit}
-              >
-                <Pencil className="h-3 w-3" /> {UI.edit}
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 normal-case tracking-normal text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60 transition"
+                  aria-label={UI.edit}
+                >
+                  <Pencil className="h-3 w-3" /> {UI.edit}
+                </button>
+                {onDeleted && (
+                  <button
+                    onClick={() => { void onDeleted(entry.id); }}
+                    className="inline-flex cursor-pointer items-center rounded-full p-1 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition"
+                    aria-label={UI.deleteEntry}
+                    title={UI.deleteEntry}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </>
             )}
           </div>
           <div className="rounded-3xl rounded-tr-md border border-primary/20 bg-gradient-to-br from-primary/12 via-primary/8 to-accent/15 px-5 py-4 shadow-sm">
@@ -1017,12 +1050,13 @@ function Composer({
 
 /* ---------- Memory card (compact preview → modal) ---------- */
 function MemoryCard({
-  entry, index, thread, onUpdated,
+  entry, index, thread, onUpdated, onDeleted,
 }: {
   entry: ThreadEntry;
   index: number;
   thread: PersonThread;
   onUpdated: (entry: ThreadEntry) => void;
+  onDeleted?: (entryId: string) => Promise<boolean | void>;
 }) {
   const UI = useUi();
   const [open, setOpen] = useState(false);
@@ -1091,6 +1125,11 @@ function MemoryCard({
               index={index}
               thread={thread}
               onUpdated={(e) => { onUpdated(e); }}
+              onDeleted={onDeleted ? async (id) => {
+                const ok = await onDeleted(id);
+                if (ok !== false) setOpen(false);
+                return ok;
+              } : undefined}
               forceReflectionOpen
             />
           </div>
