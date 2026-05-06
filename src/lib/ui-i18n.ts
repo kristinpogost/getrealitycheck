@@ -66,6 +66,8 @@ export const UI_STRINGS = {
     removeImage: "Remove image",
     image: "image",
     images: "images",
+    showMore: "Show more",
+    showLess: "Show less",
   },
   et: {
     // Index page
