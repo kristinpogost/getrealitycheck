@@ -609,7 +609,7 @@ function TimelineEntry({
         busy={busy}
         onRegenerate={regenerateOnly}
         reflectionRef={reflectionRef}
-        defaultOpen={index === thread.entries.length - 1 && thread.entries.length === 1}
+        defaultOpen={index === thread.entries.length - 1}
       />
     </div>
   );
