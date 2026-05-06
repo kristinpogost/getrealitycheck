@@ -571,9 +571,7 @@ function TimelineEntry({
             ) : (
               <>
                 {entry.userInput && (
-                  <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">
-                    {entry.userInput}
-                  </p>
+                  <CollapsibleText text={entry.userInput} UI={UI} />
                 )}
                 {entry.images && entry.images.length > 0 && (
                   <div className={entry.userInput ? "mt-3" : ""}>
