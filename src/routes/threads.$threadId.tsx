@@ -680,7 +680,7 @@ function ReflectionCard({
             </div>
             {!open && (
               <div className="mt-3 text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground/80">
-                Tap to unfold full reflection
+                {UI.tapToUnfold}
               </div>
             )}
           </button>
