@@ -163,17 +163,29 @@ Use the provided tool to structure the response.`;
 
     let priorBlock = "";
     if (hasPriors) {
-      priorBlock = `\n\nPRIOR ENTRIES IN THIS THREAD${personName ? ` (about ${personName})` : ""}, oldest first:\n` +
+      const first = priors[0];
+      const last = priors[priors.length - 1];
+      const spanDays = Math.max(0, Math.round((last.createdAt - first.createdAt) / 86400000));
+      priorBlock = `\n\n=== FULL THREAD HISTORY${personName ? ` (about ${personName})` : ""} — ${priors.length} prior entries spanning ~${spanDays} day(s), oldest first ===\n` +
         priors.map((p, i) => {
           const d = new Date(p.createdAt).toISOString().slice(0, 10);
-          return `[${i + 1}] ${d} · ${p.mode} · flag: ${p.flag}${p.pattern_tag ? ` · tag: ${p.pattern_tag}` : ""}\n  shared: ${p.userInput.slice(0, 600)}\n  summary: ${p.summary}`;
-        }).join("\n\n") + "\n";
+          const parts = [
+            `[${i + 1}] ${d} · ${p.mode}${p.hadImages ? " · had screenshots" : ""} · flag: ${p.flag}${p.pattern_tag ? ` · tag: ${p.pattern_tag}` : ""}`,
+            `  user shared: ${p.userInput.slice(0, 700)}`,
+            `  prior summary: ${p.summary}`,
+          ];
+          if (p.communication_dynamic) parts.push(`  prior dynamic: ${p.communication_dynamic.slice(0, 300)}`);
+          if (p.pattern_over_time) parts.push(`  prior pattern read: ${p.pattern_over_time.slice(0, 300)}`);
+          if (p.reality_check) parts.push(`  prior reality check: ${p.reality_check.slice(0, 200)}`);
+          return parts.join("\n");
+        }).join("\n\n") +
+        `\n=== END THREAD HISTORY ===\n\nIMPORTANT: The new entry below is ONE moment in this longer story. Read it through the lens of everything above. Trace how the dynamic has evolved (formal → casual → emotionally open, distance → closeness, curiosity building, comfort growing, etc.). Screenshots in the new entry SUPPORT the bigger picture — they do not replace it.\n`;
     }
 
     if (hasText) {
-      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY ---\n${text}\n---` });
+      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY (latest moment in the thread) ---\n${text}\n---` });
     } else {
-      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\nI uploaded chat screenshot(s) — read the visible conversation.` });
+      userContent.push({ type: "text", text: `${userIntro}${priorBlock}\n\n--- NEW ENTRY (latest moment in the thread) ---\nThe user uploaded chat screenshot(s) — read them, but interpret them as the next chapter of the thread above, not as an isolated moment.` });
     }
     if (hasImages) {
       for (const img of images) {
