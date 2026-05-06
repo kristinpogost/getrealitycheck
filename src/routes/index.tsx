@@ -24,6 +24,7 @@ function formatTime(ts: number) {
 
 function Index() {
   const navigate = useNavigate();
+  const UI = useUi();
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [threads, setThreads] = useState<PersonThread[]>([]);
