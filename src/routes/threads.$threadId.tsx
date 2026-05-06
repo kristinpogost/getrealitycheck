@@ -214,6 +214,7 @@ function ThreadPage() {
           userId={userId}
           onEntryAdded={onEntryAdded}
           onEntryUpdated={onEntryUpdated}
+          onEntryDeleted={onEntryDeleted}
           onBack={goBack}
           onDelete={onDelete}
           onRename={onRename}
@@ -224,12 +225,13 @@ function ThreadPage() {
 }
 
 function ThreadView({
-  thread, userId, onEntryAdded, onEntryUpdated, onBack, onDelete, onRename,
+  thread, userId, onEntryAdded, onEntryUpdated, onEntryDeleted, onBack, onDelete, onRename,
 }: {
   thread: PersonThread;
   userId: string;
   onEntryAdded: (entry: ThreadEntry) => void;
   onEntryUpdated: (entry: ThreadEntry) => void;
+  onEntryDeleted: (entryId: string) => Promise<boolean | void>;
   onBack: () => void;
   onDelete: () => void;
   onRename: (name: string) => void;
