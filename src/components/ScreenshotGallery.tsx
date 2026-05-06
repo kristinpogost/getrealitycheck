@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useUi } from "@/lib/ui-i18n";
 
 export function ScreenshotGallery({
   images,
