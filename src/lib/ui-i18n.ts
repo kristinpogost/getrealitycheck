@@ -140,15 +140,81 @@ function normalize(code: string | null | undefined): UiLang {
   return "en";
 }
 
-export function setStoredLang(code: string) {
-  const lang = normalize(code);
+const HISTORY_KEY = "ui_lang_history";
+const MANUAL_KEY = "ui_lang_manual";
+const HISTORY_MAX = 5;
+const SWITCH_THRESHOLD = 2; // need this many recent consistent signals to switch
+
+function readHistory(): UiLang[] {
   try {
-    const prev = localStorage.getItem(STORAGE_KEY);
-    if (prev !== lang) {
-      localStorage.setItem(STORAGE_KEY, lang);
-      window.dispatchEvent(new Event("ui-lang-change"));
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is UiLang => x === "en" || x === "et") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHistory(history: UiLang[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-HISTORY_MAX)));
+  } catch {}
+}
+
+function emitChange() {
+  window.dispatchEvent(new Event("ui-lang-change"));
+}
+
+/** Called after each AI analysis. Adapts UI language if user has not manually overridden,
+ *  and only flips when recent signals are consistently the new language. */
+export function setStoredLang(code: string) {
+  const detected = normalize(code);
+  try {
+    const history = [...readHistory(), detected];
+    writeHistory(history);
+
+    // Respect manual override
+    if (localStorage.getItem(MANUAL_KEY) === "1") return;
+
+    const prev = localStorage.getItem(STORAGE_KEY) as UiLang | null;
+    if (prev === detected) return;
+
+    const recent = history.slice(-SWITCH_THRESHOLD);
+    if (recent.length >= SWITCH_THRESHOLD && recent.every((l) => l === detected)) {
+      localStorage.setItem(STORAGE_KEY, detected);
+      emitChange();
+    } else if (!prev) {
+      // first ever: adopt immediately
+      localStorage.setItem(STORAGE_KEY, detected);
+      emitChange();
     }
   } catch {}
+}
+
+/** Manual user override (e.g. settings toggle). Locks the choice. */
+export function setManualLang(code: UiLang) {
+  try {
+    localStorage.setItem(STORAGE_KEY, code);
+    localStorage.setItem(MANUAL_KEY, "1");
+    emitChange();
+  } catch {}
+}
+
+/** Clear manual lock, allow auto-detection again. */
+export function clearManualLang() {
+  try {
+    localStorage.removeItem(MANUAL_KEY);
+    emitChange();
+  } catch {}
+}
+
+export function isManualLang(): boolean {
+  try {
+    return localStorage.getItem(MANUAL_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 function readStored(): UiLang {
@@ -181,3 +247,4 @@ export function useUi(): UiStrings {
   const lang = useUiLang();
   return UI_STRINGS[lang];
 }
+
