@@ -137,4 +137,27 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  /* Tactile, app-like cursor consistency: every interactive element gets a pointer */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  [role="switch"],
+  [role="checkbox"],
+  [role="radio"],
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  [data-radix-collection-item],
+  [tabindex]:not([tabindex="-1"]):not(input):not(textarea) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
