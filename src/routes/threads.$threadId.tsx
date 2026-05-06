@@ -838,6 +838,7 @@ function Composer({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       const res = data as AnalysisResult;
+      if (res?.language) setStoredLang(res.language);
 
       const imagesToSave = hasImages ? images : undefined;
       const entry = await addEntryDb(userId, thread.id, {
