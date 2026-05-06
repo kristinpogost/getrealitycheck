@@ -415,7 +415,7 @@ function TimelineEntry({
       await updateEntryDb(entry.id, { userInput: trimmed, images: imagesForDb, result });
       onUpdated({ ...entry, userInput: trimmed, images: imagesForAi, result });
       setIsEditing(false);
-      toast.success("Reflection updated.");
+      toast.success(UI.reflectionUpdated);
     } catch (e: any) {
       toast.error(e?.message || UI.error);
     } finally {
