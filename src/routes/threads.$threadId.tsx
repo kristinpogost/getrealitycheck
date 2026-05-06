@@ -755,6 +755,7 @@ function Composer({
   onSubmitted: (entry: ThreadEntry) => void;
   continueMode: boolean;
 }) {
+  const UI = useUi();
   const [mode, setMode] = useState<Mode>("situation");
   const [text, setText] = useState("");
   const [images, setImages] = useState<string[]>([]);
