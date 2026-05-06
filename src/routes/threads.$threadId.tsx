@@ -605,14 +605,18 @@ function TimelineEntry({
         </div>
       </div>
 
-      {/* AI reflection — collapsible insight card */}
-      <ReflectionCard
-        entry={entry}
-        busy={busy}
-        onRegenerate={regenerateOnly}
-        reflectionRef={reflectionRef}
-        defaultOpen={index === thread.entries.length - 1}
-      />
+      {/* AI reflection */}
+      {forceReflectionOpen ? (
+        <ExpandedReflection entry={entry} busy={busy} onRegenerate={regenerateOnly} />
+      ) : (
+        <ReflectionCard
+          entry={entry}
+          busy={busy}
+          onRegenerate={regenerateOnly}
+          reflectionRef={reflectionRef}
+          defaultOpen={index === thread.entries.length - 1}
+        />
+      )}
     </div>
   );
 }
@@ -713,7 +717,55 @@ function ReflectionCard({
   );
 }
 
-/* ---------- Composer ---------- */
+/* ---------- Expanded reflection (no collapse) ---------- */
+function ExpandedReflection({
+  entry, busy, onRegenerate,
+}: {
+  entry: ThreadEntry;
+  busy: boolean;
+  onRegenerate: () => void;
+}) {
+  const r = entry.result;
+  const flagColor = r.flag_color;
+  const tintWrap =
+    flagColor === "green"
+      ? "from-flag-green-soft/45 via-card/85 to-card/70 border-flag-green/25"
+      : flagColor === "red"
+        ? "from-flag-red-soft/45 via-card/85 to-card/70 border-flag-red/25"
+        : "from-flag-yellow-soft/40 via-card/85 to-card/70 border-flag-yellow/25";
+  const glow =
+    flagColor === "green"
+      ? "bg-flag-green-soft/40"
+      : flagColor === "red"
+        ? "bg-flag-red-soft/40"
+        : "bg-flag-yellow-soft/35";
+
+  return (
+    <div className="flex justify-start">
+      <div className="w-full max-w-[96%]">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/70 px-2.5 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" /> {UI.reflection}
+          </div>
+          <button
+            onClick={onRegenerate}
+            disabled={busy}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-muted-foreground/70 hover:text-foreground hover:bg-card/60 disabled:opacity-60"
+          >
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+            {UI.regenerate}
+          </button>
+        </div>
+        <div className={`relative overflow-hidden rounded-3xl rounded-tl-md border bg-gradient-to-br ${tintWrap} backdrop-blur-sm shadow-[0_6px_28px_-18px_rgba(180,140,150,0.35)] p-5 sm:p-6`}>
+          <div className={`pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full blur-3xl opacity-70 ${glow}`} />
+          <div className="relative">
+            <ResultCards result={entry.result} variant={entry.mode} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 function Composer({
   thread, userId, onSubmitted, continueMode,
 }: {
@@ -1011,6 +1063,7 @@ function MemoryCard({
               index={index}
               thread={thread}
               onUpdated={(e) => { onUpdated(e); }}
+              forceReflectionOpen
             />
           </div>
         </DialogContent>
