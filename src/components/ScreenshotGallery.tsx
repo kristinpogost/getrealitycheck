@@ -33,8 +33,8 @@ export function ScreenshotGallery({
               key={i}
               type="button"
               onClick={() => setLightboxIndex(i)}
-              style={{ height: thumbHeight, cursor: "zoom-in" }}
-              className="snap-start shrink-0 overflow-hidden rounded-xl border border-border/50 bg-muted hover:border-primary/40 hover:shadow-md transition"
+              style={{ height: thumbHeight }}
+              className="snap-start shrink-0 cursor-pointer overflow-hidden rounded-xl border border-border/50 bg-muted hover:border-primary/40 hover:shadow-md hover:scale-[1.02] transition-all duration-300"
               aria-label={`Open screenshot ${i + 1} of ${images.length}`}
             >
               <img src={src} alt={`Screenshot ${i + 1}`} className="h-full w-auto object-contain pointer-events-none" />
