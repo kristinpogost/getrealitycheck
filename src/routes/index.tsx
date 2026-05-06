@@ -439,7 +439,42 @@ function ThreadView({
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <div className="text-[0.7rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">{UI.threadStart}</div>
-            <h2 className="mt-1 font-display text-3xl text-foreground">{thread.name}</h2>
+            {editing ? (
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitRename();
+                    else if (e.key === "Escape") { setDraftName(thread.name); setEditing(false); }
+                  }}
+                  onBlur={commitRename}
+                  maxLength={120}
+                  className="font-display text-3xl text-foreground bg-background/70 border border-border/60 rounded-lg px-2 py-0.5 outline-none focus:ring-2 focus:ring-ring/40 min-w-0 w-full max-w-xs"
+                />
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={commitRename}
+                  className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-card/60"
+                  aria-label="Save name"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="mt-1 flex items-center gap-1.5 group">
+                <h2 className="font-display text-3xl text-foreground">{thread.name}</h2>
+                <button
+                  onClick={() => setEditing(true)}
+                  className="rounded-full p-1.5 text-muted-foreground/60 hover:text-foreground hover:bg-card/60 opacity-60 group-hover:opacity-100 transition"
+                  aria-label="Rename"
+                  title="Rename"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               {formatDay(thread.createdAt)} · {thread.entries.length} {thread.entries.length === 1 ? UI.entry : UI.entries}
             </p>
