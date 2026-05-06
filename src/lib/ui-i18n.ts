@@ -72,21 +72,21 @@ export const UI_STRINGS = {
     appBadge: "Reaalsuskontroll",
     appHeadline1: "Pehmem viis",
     appHeadline2: "selguseks",
-    appTagline: "Vaikne ruum mõtisklemiseks — mis toimub ja mida see võiks tähendada.",
+    appTagline: "Rahulik koht, kus märgata mustreid ja mõista dünaamikat.",
     people: "Inimesed",
     newPerson: "Uus inimene",
-    noPeople: "Veel pole ühtegi lõnga. Alusta sellest, et lisad kellegi, kelle üle mõelda.",
+    noPeople: "Veel pole ühtegi teemat. Alusta sellest, et lisad kellegi, kelle üle mõelda.",
     newThreadTitle: "Kelle kohta see on?",
-    newThreadHint: "Kasuta nime, hüüdnime või silti — seda näed ainult sina.",
+    newThreadHint: "Kasuta nime, hüüdnime või silti, seda näed ainult sina.",
     namePlaceholder: "nt Alex, M., uus kolleeg",
     cancel: "Tühista",
-    start: "Alusta lõnga",
+    start: "Alusta teemat",
     lastInteraction: "Viimane peegeldus",
     entries: "sissekannet",
     entry: "sissekanne",
     disclaimer: "See tööriist pakub mõtisklust, mitte absoluutset tõde.",
     signOut: "Logi välja",
-    noEntriesShort: "Veel pole sissekandeid — ava, et lisada esimene peegeldus.",
+    noEntriesShort: "Veel pole sissekandeid, ava, et lisada esimene peegeldus.",
 
     // Thread page
     modeSituation: "Olukord",
@@ -95,7 +95,7 @@ export const UI_STRINGS = {
     placeholderMessage: "Kleebi vestlus või lisa ekraanipilte (mistahes keeles)",
     placeholderContinue: "Lisa, mis edasi juhtus, või lisa uusi ekraanipilte...",
     uploadHint: "Kleebi ekraanipildid (Ctrl+V), lohista või lae üles",
-    uploadSubhint: "PNG, JPG — lisa nii palju kui vaja. Ekraanipildid on peamine sisend.",
+    uploadSubhint: "PNG, JPG, lisa nii palju kui vaja. Ekraanipildid on peamine sisend.",
     addMoreScreenshots: "Lisa veel ekraanipilte",
     addScreenshots: "Lisa ekraanipilte",
     pasteDragClick: "Kleebi, lohista või vajuta",
@@ -104,21 +104,21 @@ export const UI_STRINGS = {
     empty: "Jaga veidi rohkem, et oleks mille üle mõtiskleda.",
     error: "Midagi läks valesti. Palun proovi uuesti.",
     imageTooLarge: "Pilt on liiga suur (max 8MB).",
-    deleteThread: "Kustuta lõng",
-    confirmDelete: "Kustutada kogu see lõng? Seda ei saa tagasi võtta.",
+    deleteThread: "Kustuta teema",
+    confirmDelete: "Kustutada kogu see teema? Seda ei saa tagasi võtta.",
     yourEntry: "Sina",
     reflection: "Peegeldus",
-    threadStart: "Lõng alustatud",
+    threadStart: "Teema alustatud",
     edit: "Muuda",
-    save: "Salvesta ja uuenda",
-    regenerate: "Uuenda",
+    save: "Salvesta ja loo uuesti",
+    regenerate: "Loo uuesti",
     overallTrend: "üldine suund",
-    continuingThread: "lõng jätkub",
+    continuingThread: "teema jätkub",
     firstEntry: "esimene sissekanne",
     noEntriesYet: "Veel pole sissekandeid. Jaga ülal esimest olukorda või sõnumit.",
-    tapToUnfold: "Vajuta täispeegelduse avamiseks",
+    tapToUnfold: "Vajuta peegelduse avamiseks",
     tapToEnlarge: "Vajuta suurendamiseks",
-    threadNotFound: "Lõnga ei leitud.",
+    threadNotFound: "Teemat ei leitud.",
     goBack: "Mine tagasi",
     keepFewWords: "Palun jäta vähemalt mõni sõna või üks ekraanipilt.",
     reflectionUpdated: "Peegeldus uuendatud.",
@@ -140,15 +140,81 @@ function normalize(code: string | null | undefined): UiLang {
   return "en";
 }
 
-export function setStoredLang(code: string) {
-  const lang = normalize(code);
+const HISTORY_KEY = "ui_lang_history";
+const MANUAL_KEY = "ui_lang_manual";
+const HISTORY_MAX = 5;
+const SWITCH_THRESHOLD = 2; // need this many recent consistent signals to switch
+
+function readHistory(): UiLang[] {
   try {
-    const prev = localStorage.getItem(STORAGE_KEY);
-    if (prev !== lang) {
-      localStorage.setItem(STORAGE_KEY, lang);
-      window.dispatchEvent(new Event("ui-lang-change"));
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is UiLang => x === "en" || x === "et") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHistory(history: UiLang[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-HISTORY_MAX)));
+  } catch {}
+}
+
+function emitChange() {
+  window.dispatchEvent(new Event("ui-lang-change"));
+}
+
+/** Called after each AI analysis. Adapts UI language if user has not manually overridden,
+ *  and only flips when recent signals are consistently the new language. */
+export function setStoredLang(code: string) {
+  const detected = normalize(code);
+  try {
+    const history = [...readHistory(), detected];
+    writeHistory(history);
+
+    // Respect manual override
+    if (localStorage.getItem(MANUAL_KEY) === "1") return;
+
+    const prev = localStorage.getItem(STORAGE_KEY) as UiLang | null;
+    if (prev === detected) return;
+
+    const recent = history.slice(-SWITCH_THRESHOLD);
+    if (recent.length >= SWITCH_THRESHOLD && recent.every((l) => l === detected)) {
+      localStorage.setItem(STORAGE_KEY, detected);
+      emitChange();
+    } else if (!prev) {
+      // first ever: adopt immediately
+      localStorage.setItem(STORAGE_KEY, detected);
+      emitChange();
     }
   } catch {}
+}
+
+/** Manual user override (e.g. settings toggle). Locks the choice. */
+export function setManualLang(code: UiLang) {
+  try {
+    localStorage.setItem(STORAGE_KEY, code);
+    localStorage.setItem(MANUAL_KEY, "1");
+    emitChange();
+  } catch {}
+}
+
+/** Clear manual lock, allow auto-detection again. */
+export function clearManualLang() {
+  try {
+    localStorage.removeItem(MANUAL_KEY);
+    emitChange();
+  } catch {}
+}
+
+export function isManualLang(): boolean {
+  try {
+    return localStorage.getItem(MANUAL_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 function readStored(): UiLang {
@@ -181,3 +247,4 @@ export function useUi(): UiStrings {
   const lang = useUiLang();
   return UI_STRINGS[lang];
 }
+

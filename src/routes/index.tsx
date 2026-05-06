@@ -8,7 +8,7 @@ import { FlagBadge } from "@/components/FlagBadge";
 import { TrendBadge } from "@/components/TrendBadge";
 import { latestEntry, type PersonThread } from "@/lib/threads";
 import { fetchThreads, createPersonDb, migrateLocalIfNeeded } from "@/lib/db";
-import { useUi } from "@/lib/ui-i18n";
+import { useUi, useUiLang, setManualLang } from "@/lib/ui-i18n";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -20,6 +20,23 @@ function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
+}
+
+function LangToggle() {
+  const lang = useUiLang();
+  const next: "en" | "et" = lang === "et" ? "en" : "et";
+  return (
+    <button
+      onClick={() => setManualLang(next)}
+      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition"
+      aria-label="Language"
+      title={lang === "et" ? "Switch to English" : "Lülitu eesti keelele"}
+    >
+      <span className={lang === "en" ? "text-foreground" : ""}>EN</span>
+      <span className="opacity-40">/</span>
+      <span className={lang === "et" ? "text-foreground" : ""}>ET</span>
+    </button>
+  );
 }
 
 function Index() {
@@ -93,7 +110,8 @@ function Index() {
     <div className="min-h-screen px-4 py-10 sm:py-14">
       <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-2 flex justify-end">
+        <div className="mb-2 flex justify-end items-center gap-2">
+          <LangToggle />
           <button
             onClick={signOut}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-card/60 transition"
