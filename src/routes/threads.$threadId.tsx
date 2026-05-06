@@ -1063,6 +1063,7 @@ function MemoryCard({
               index={index}
               thread={thread}
               onUpdated={(e) => { onUpdated(e); }}
+              forceReflectionOpen
             />
           </div>
         </DialogContent>
