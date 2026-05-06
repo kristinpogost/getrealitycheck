@@ -605,14 +605,18 @@ function TimelineEntry({
         </div>
       </div>
 
-      {/* AI reflection — collapsible insight card */}
-      <ReflectionCard
-        entry={entry}
-        busy={busy}
-        onRegenerate={regenerateOnly}
-        reflectionRef={reflectionRef}
-        defaultOpen={index === thread.entries.length - 1}
-      />
+      {/* AI reflection */}
+      {forceReflectionOpen ? (
+        <ExpandedReflection entry={entry} busy={busy} onRegenerate={regenerateOnly} />
+      ) : (
+        <ReflectionCard
+          entry={entry}
+          busy={busy}
+          onRegenerate={regenerateOnly}
+          reflectionRef={reflectionRef}
+          defaultOpen={index === thread.entries.length - 1}
+        />
+      )}
     </div>
   );
 }
