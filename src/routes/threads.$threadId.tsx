@@ -812,6 +812,12 @@ function Composer({
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            if (!loading) analyze();
+          }
+        }}
         placeholder={placeholder}
         rows={mode === "situation" ? 5 : 3}
         maxLength={4000}
