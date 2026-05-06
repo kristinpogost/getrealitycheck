@@ -494,31 +494,34 @@ function ThreadView({
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="space-y-10">
-        {thread.entries.length === 0 && (
-          <div className="rounded-3xl border border-dashed border-border/60 bg-card/40 p-8 text-center text-sm text-muted-foreground">
-            No entries yet. Share the first situation or message below.
-          </div>
-        )}
-        {thread.entries.map((e, i) => (
-          <TimelineEntry
-            key={e.id}
-            entry={e}
-            index={i}
-            reflectionRef={i === thread.entries.length - 1 ? latestReflectionRef : undefined}
-          />
-        ))}
-      </div>
-
-      {/* Composer */}
-      <div className="mt-10">
+      {/* Composer at top — quick continue */}
+      <div className="mb-8">
         <Composer
           thread={thread}
           userId={userId}
           onSubmitted={onEntryAdded}
           continueMode={thread.entries.length > 0}
         />
+      </div>
+
+      {/* Timeline — newest first */}
+      <div className="space-y-10">
+        {thread.entries.length === 0 && (
+          <div className="rounded-3xl border border-dashed border-border/60 bg-card/40 p-8 text-center text-sm text-muted-foreground">
+            No entries yet. Share the first situation or message above.
+          </div>
+        )}
+        {[...thread.entries].reverse().map((e, i, arr) => {
+          const originalIndex = thread.entries.length - 1 - i;
+          return (
+            <TimelineEntry
+              key={e.id}
+              entry={e}
+              index={originalIndex}
+              reflectionRef={i === 0 ? latestReflectionRef : undefined}
+            />
+          );
+        })}
       </div>
     </section>
   );
