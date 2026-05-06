@@ -199,6 +199,7 @@ function Index() {
 function NewPersonModal({
   onCancel, onCreate,
 }: { onCancel: () => void; onCreate: (name: string) => void }) {
+  const UI = useUi();
   const [name, setName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
