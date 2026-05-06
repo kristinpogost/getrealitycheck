@@ -93,7 +93,8 @@ function Index() {
     <div className="min-h-screen px-4 py-10 sm:py-14">
       <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-2 flex justify-end">
+        <div className="mb-2 flex justify-end items-center gap-2">
+          <LangToggle />
           <button
             onClick={signOut}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-card/60 transition"
