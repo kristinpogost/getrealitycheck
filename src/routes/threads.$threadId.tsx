@@ -321,6 +321,7 @@ function TimelineEntry({
   reflectionRef?: React.Ref<HTMLDivElement>;
   forceReflectionOpen?: boolean;
 }) {
+  const UI = useUi();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(entry.userInput);
   const [draftImages, setDraftImages] = useState<string[]>(entry.images ?? []);
