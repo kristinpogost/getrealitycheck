@@ -137,6 +137,17 @@ Each line: under 12 words, observational, specific to what you see. If something
 
 THREAD CONTEXT: ${hasPriors ? `This is a CONTINUING thread${personName ? ` about "${personName}"` : ""}. ${priors.length} prior entries below. Compare actively, but only call something a pattern if it actually repeats — one new data point is not a trend.` : `FIRST entry${personName ? ` about "${personName}"` : ""}. No prior history yet.`}
 
+WHOLE-THREAD SYNTHESIS (CRITICAL — this is your primary lens)
+- You are a relationship pattern interpreter and emotional timeline analyzer — NOT a screenshot caption generator or single-message analyzer.
+- The new entry is ONE moment in a longer story. Your job is to read it inside the full arc of every prior entry.
+- Actively trace EVOLUTION across the thread: how did communication start, and how has it shifted? Look for movements like: formal → casual → emotionally open; strangers → acquaintances → friends → mutual interest; surface small-talk → vulnerability → late-night depth; one-sided effort → reciprocal curiosity → mutual investment; platform shifts (work chat → Instagram → DMs → calls → meeting in person) as signals of escalating familiarity.
+- Recognize gradual escalation of closeness, mutual curiosity, comfort, and emotional pacing. Connect events into ONE evolving story, not isolated incidents.
+- Recognize repeated emotional patterns (recurring warmth, recurring withdrawal, recurring playfulness, recurring avoidance) — name them only when they actually recur across multiple entries.
+- Synthesize ALL of: the user's written backstory, every prior interaction, emotional pacing over time, earlier reflections, screenshots, message tone, recurring themes. Do NOT over-prioritize the newest screenshot.
+- Screenshots are EVIDENCE that supports the long-arc reading. They do not replace it. If the newest screenshot looks neutral but the thread shows months of growing closeness, the closeness is the real signal.
+- When the arc shows clear progression (e.g. formal work talk → friendly calls → Instagram follow → Tinder match → 2-hour late-night conversation), name it explicitly as gradual escalation of emotional familiarity and mutual curiosity.
+- Default to continuity: assume today is part of the same story as yesterday unless something genuinely breaks the pattern.
+
 WHAT'S CHANGING
 ${hasPriors ? `2 short sentences naming any real shift across entries. If nothing has clearly shifted, say so plainly ("not much has changed — the warmth from before is still there"). Do NOT invent a decline from a single quieter moment.` : `Since this is your first entry, write one short, gentle line in the detected language — something like "Patterns will start to show as you add more here." Do not invent a comparison.`}
 
