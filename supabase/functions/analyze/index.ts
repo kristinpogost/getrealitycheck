@@ -24,6 +24,28 @@ const OLDER_WINDOW = 6;
 const MAX_TEXT_LENGTH = 3000;
 const MAX_JSON_RESPONSE_CHARS = 14000;
 const MAX_IMAGE_DATA_URL_CHARS = 1_800_000;
+const SUPPORTED_IMAGE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+type GatewayContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
+type GatewayMessage = {
+  role: "system" | "user";
+  content: string | GatewayContentPart[];
+};
+
+type GatewayPayload = {
+  model: string;
+  messages: GatewayMessage[];
+  temperature: number;
+  max_tokens: number;
+};
 
 type AnalysisResult = {
   language: string;
@@ -72,10 +94,53 @@ type AnalysisResult = {
   };
 };
 
+function stripControlChars(value: string) {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
+}
+
 function compact(value: string | undefined, max: number) {
   if (!value) return "";
-  const cleaned = value.replace(/\s+/g, " ").trim();
+  const cleaned = stripControlChars(value).replace(/\s+/g, " ").trim();
   return cleaned.length > max ? `${cleaned.slice(0, max - 1)}…` : cleaned;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function sanitizeNullableString(value: unknown, max: number) {
+  const cleaned = compact(typeof value === "string" ? value : "", max);
+  return cleaned || undefined;
+}
+
+function sanitizeMode(value: unknown): PriorEntry["mode"] {
+  return value === "message" ? "message" : "situation";
+}
+
+function sanitizePriorEntries(entries: unknown): PriorEntry[] {
+  if (!Array.isArray(entries)) return [];
+
+  return dedupePriorEntries(
+    entries
+      .filter(isRecord)
+      .map((entry) => ({
+        createdAt: Number.isFinite(entry.createdAt) ? Number(entry.createdAt) : Date.now(),
+        mode: sanitizeMode(entry.mode),
+        userInput: compact(typeof entry.userInput === "string" ? entry.userInput : "", 220),
+        summary: compact(typeof entry.summary === "string" ? entry.summary : "", 180),
+        flag: compact(typeof entry.flag === "string" ? entry.flag : "", 40) || "Kollane lipp",
+        flag_color: entry.flag_color === "green" || entry.flag_color === "yellow" || entry.flag_color === "red"
+          ? entry.flag_color
+          : "yellow",
+        pattern_tag: sanitizeNullableString(entry.pattern_tag, 50),
+        trend: entry.trend === "improving" || entry.trend === "declining" || entry.trend === "inconsistent" || entry.trend === "stable" || entry.trend === "new"
+          ? entry.trend
+          : undefined,
+        memory: sanitizeNullableString(entry.memory, 180),
+        hadImages: Boolean(entry.hadImages),
+      }))
+      .slice(-(OLDER_WINDOW + RECENT_DETAILED)),
+  );
 }
 
 function dedupePriorEntries(entries: PriorEntry[]) {
@@ -89,11 +154,137 @@ function dedupePriorEntries(entries: PriorEntry[]) {
 }
 
 function extractJsonObject(raw: string) {
-  const trimmed = raw.trim();
+  let trimmed = raw.trim();
+  trimmed = trimmed.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
   if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
   const match = trimmed.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Model returned non-JSON content");
-  return match[0];
+  return match[0]
+    .replace(/,\s*}/g, "}")
+    .replace(/,\s*]/g, "]")
+    .replace(/[\u0000-\u001F\u007F]/g, "");
+}
+
+function sanitizeImageDataUrl(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  const match = trimmed.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) return null;
+
+  const mime = match[1].toLowerCase() === "image/jpg" ? "image/jpeg" : match[1].toLowerCase();
+  if (!SUPPORTED_IMAGE_MIME_TYPES.has(mime)) return null;
+
+  const base64 = match[2].replace(/\s+/g, "");
+  if (!base64 || base64.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) return null;
+
+  const normalized = `data:${mime};base64,${base64}`;
+  return normalized.length <= MAX_IMAGE_DATA_URL_CHARS ? normalized : null;
+}
+
+function sanitizeImages(images: unknown) {
+  if (!Array.isArray(images)) return { valid: [] as string[], dropped: 0 };
+
+  const valid = images
+    .map((image) => sanitizeImageDataUrl(image))
+    .filter((image): image is string => Boolean(image));
+
+  return {
+    valid,
+    dropped: images.length - valid.length,
+  };
+}
+
+function sanitizeJson<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeJson(item))
+      .filter((item) => item !== undefined && item !== null) as T;
+  }
+
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, item]) => [key, sanitizeJson(item)])
+        .filter(([, item]) => item !== undefined && item !== null),
+    ) as T;
+  }
+
+  return value;
+}
+
+function validateGatewayPayload(payload: GatewayPayload) {
+  if (!payload.model || !Array.isArray(payload.messages) || payload.messages.length === 0) {
+    throw new Error("Generated AI payload is missing a valid model or messages array");
+  }
+
+  payload.messages.forEach((message, messageIndex) => {
+    if ((message.role !== "system" && message.role !== "user") || message.content === undefined || message.content === null) {
+      throw new Error(`Generated AI payload has an invalid message at index ${messageIndex}`);
+    }
+
+    if (Array.isArray(message.content)) {
+      if (message.content.length === 0) {
+        throw new Error(`Generated AI payload has an empty content array at message ${messageIndex}`);
+      }
+
+      message.content.forEach((part, partIndex) => {
+        if (part.type === "text") {
+          if (!part.text?.trim()) {
+            throw new Error(`Generated AI payload has an empty text part at message ${messageIndex}:${partIndex}`);
+          }
+          return;
+        }
+
+        if (part.type === "image_url") {
+          if (!part.image_url?.url || !sanitizeImageDataUrl(part.image_url.url)) {
+            throw new Error(`Generated AI payload has an invalid image part at message ${messageIndex}:${partIndex}`);
+          }
+          return;
+        }
+
+        throw new Error(`Generated AI payload has an unsupported content part at message ${messageIndex}:${partIndex}`);
+      });
+      return;
+    }
+
+    if (typeof message.content !== "string" || !message.content.trim()) {
+      throw new Error(`Generated AI payload has invalid string content at message ${messageIndex}`);
+    }
+  });
+}
+
+function redactPayloadForLogs(payload: GatewayPayload) {
+  return {
+    ...payload,
+    messages: payload.messages.map((message) => ({
+      ...message,
+      content: Array.isArray(message.content)
+        ? message.content.map((part) => part.type === "image_url"
+          ? {
+              type: "image_url",
+              image_url: {
+                url: `[data-url:${part.image_url.url.slice(5, part.image_url.url.indexOf(";"))};chars=${part.image_url.url.length}]`,
+              },
+            }
+          : part)
+        : message.content,
+    })),
+  };
+}
+
+function isDevelopmentRequest(req: Request) {
+  const origin = req.headers.get("origin") ?? "";
+  const referer = req.headers.get("referer") ?? "";
+  const host = req.headers.get("host") ?? "";
+  return (
+    req.headers.get("x-debug-analyze") === "1"
+    || origin.includes("localhost")
+    || referer.includes("localhost")
+    || origin.includes("-preview--")
+    || referer.includes("-preview--")
+    || host.includes("-preview--")
+  );
 }
 
 function safeString(value: unknown, fallback: string, max = 700) {
@@ -201,6 +392,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const startedAt = Date.now();
+  const debugMode = isDevelopmentRequest(req);
 
   try {
     const { text, mode, images, personName, priorEntries } = await req.json();
@@ -209,13 +401,11 @@ serve(async (req) => {
 
     const currentText = compact(typeof text === "string" ? text : "", MAX_TEXT_LENGTH);
     const hasText = currentText.trim().length >= 3;
-    const allImages = Array.isArray(images)
-      ? images.filter((image: unknown) => typeof image === "string" && image.startsWith("data:") && image.length <= MAX_IMAGE_DATA_URL_CHARS)
-      : [];
-    const cappedImages = allImages.slice(0, MAX_IMAGES);
+    const { valid: sanitizedImages, dropped: droppedImages } = sanitizeImages(images);
+    const cappedImages = sanitizedImages.slice(0, MAX_IMAGES);
     const hasImages = cappedImages.length > 0;
 
-    const allPriors: PriorEntry[] = dedupePriorEntries(Array.isArray(priorEntries) ? priorEntries : []);
+    const allPriors: PriorEntry[] = sanitizePriorEntries(priorEntries);
     const historyWindow = allPriors.slice(-(OLDER_WINDOW + RECENT_DETAILED));
     const recent = historyWindow.slice(-RECENT_DETAILED);
     const older = historyWindow.slice(0, Math.max(0, historyWindow.length - RECENT_DETAILED));
@@ -300,21 +490,27 @@ Rules:
 - If the current moment is ambiguous but the longer arc is warm, say so.
 - Never output markdown, code fences, or commentary outside JSON.`;
 
-    const userContent: any[] = [
+    const baseUserText = [
+      `Mode: ${mode === "message" ? "conversation" : "situation"}`,
+      `Thread label: ${typeof personName === "string" && personName.trim() ? compact(personName, 120) : "—"}`,
+      threadSummary,
+      `NEW ENTRY:\n${hasText ? currentText : "The user shared screenshots only."}`,
+      hasImages ? `The screenshots are supporting evidence for the same thread. Count: ${cappedImages.length}.` : "",
+      droppedImages > 0 ? `Some screenshots were ignored because their format was invalid.` : "",
+    ].filter(Boolean).join("\n\n");
+
+    const userContent: GatewayContentPart[] = [
       {
         type: "text",
-        text: [
-          `Mode: ${mode === "message" ? "conversation" : "situation"}`,
-          `Thread label: ${personName ?? "—"}`,
-          threadSummary,
-          `NEW ENTRY:\n${hasText ? currentText : "The user shared screenshots only."}`,
-          hasImages ? `The screenshots are supporting evidence for the same thread. Count: ${cappedImages.length}.` : "",
-        ].filter(Boolean).join("\n\n"),
+        text: baseUserText,
       },
-      ...cappedImages.map((url) => ({ type: "image_url", image_url: { url } })),
+      ...cappedImages
+        .map((url) => sanitizeImageDataUrl(url))
+        .filter((url): url is string => Boolean(url))
+        .map((url) => ({ type: "image_url", image_url: { url } })),
     ];
 
-    const gatewayPayload = {
+    const gatewayPayload = sanitizeJson<GatewayPayload>({
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
@@ -322,15 +518,42 @@ Rules:
       ],
       temperature: 0.5,
       max_tokens: 2200,
-    };
+    });
+
+    let activePayload = gatewayPayload;
+
+    try {
+      validateGatewayPayload(activePayload);
+    } catch (validationError) {
+      if (!hasImages) throw validationError;
+
+      console.warn("analyze payload validation failed, retrying text-only", JSON.stringify({
+        message: validationError instanceof Error ? validationError.message : String(validationError),
+      }));
+
+      activePayload = sanitizeJson<GatewayPayload>({
+        ...gatewayPayload,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: [{ type: "text", text: `${baseUserText}\n\nScreenshot processing failed, so analyze the text and thread memory only.` }] },
+        ],
+      });
+
+      validateGatewayPayload(activePayload);
+    }
 
     console.log("analyze request", JSON.stringify({
       textChars: currentText.length,
       imagesSent: cappedImages.length,
+      imagesDropped: droppedImages,
       priorsReceived: Array.isArray(priorEntries) ? priorEntries.length : 0,
       priorsSent: historyWindow.length,
       hasPriors,
     }));
+
+    if (debugMode) {
+      console.log("analyze request payload", JSON.stringify(redactPayloadForLogs(activePayload)));
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -338,23 +561,28 @@ Rules:
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(gatewayPayload),
+      body: JSON.stringify(activePayload),
     });
 
     const rawBody = await response.text();
 
     if (!response.ok) {
       console.error("Gateway error", JSON.stringify({ status: response.status, body: rawBody.slice(0, 1200) }));
+      if (debugMode) {
+        console.log("analyze failed payload", JSON.stringify(redactPayloadForLogs(activePayload)));
+      }
       const details = rawBody.slice(0, 500) || "Unknown AI gateway error";
       return new Response(JSON.stringify({
         error: response.status === 429
           ? "Rate limit exceeded. Please try again later."
           : response.status === 402
             ? "Credits exhausted. Please add funds to your Lovable AI workspace."
+            : response.status === 400
+              ? "AI request body was invalid"
             : "AI service error",
         details,
       }), {
-        status: response.status === 429 || response.status === 402 ? response.status : 500,
+        status: response.status === 429 || response.status === 402 || response.status === 400 ? response.status : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -391,7 +619,7 @@ Rules:
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("analyze error", JSON.stringify({ message, durationMs: Date.now() - startedAt }));
+    console.error("analyze error", JSON.stringify({ message, durationMs: Date.now() - startedAt, debugMode }));
     const languageHint = "en";
     return new Response(JSON.stringify({
       ...fallbackResult(languageHint, message),
