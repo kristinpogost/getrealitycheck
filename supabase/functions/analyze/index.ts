@@ -504,7 +504,7 @@ LENGTH
 - Be concise. Cut filler. No bullet lists in any string.
 
 UI_LABELS
-- Localize all ui_labels into the same language as the analysis. Estonian labels: "Lühikokkuvõte", "Mustri nimi", "Dünaamika", "Varjatud vihjed", "Võimalikud kavatsused", "Lipp", "Miks see lipp", "Jaotus", "Algatus", "Panus", "Järjepidevus", "Emotsionaalne toon", "Mida see võib tähendada", "Mõttekoht", "Reaalsuskontroll", "Kui midagi ei muutu", "Järgmine samm", "Muster ajas", "Mis muutub".
+- Localize all ui_labels into the same language as the analysis. Estonian labels: "Lühikokkuvõte", "Mustri nimi", "Dünaamika", "Varjatud vihjed", "Võimalikud kavatsused", "Lipp", "Miks see lipp", "Jaotus", "Algatus", "Panus", "Järjepidevus", "Emotsionaalne toon", "Mida see võib tähendada", "Mõttekoht", "Reaalsuskontroll", "Oluline tähelepanek", "Järgmine samm", "Muster ajas", "Mis muutub". The if_nothing_changes label MUST be "Oluline tähelepanek" (or "Tasub märgata") in Estonian / "Worth noticing" in English — never "Kui midagi ei muutu" / "If nothing changes".
 
 FINAL CHECK before returning: re-read for repeated phrases across sections, name overuse, awkward translations, and dashboard tone. Rewrite anything that sounds robotic or duplicative.`;
 
