@@ -562,6 +562,7 @@ function TimelineEntry({
   };
 
   const saveAndRegenerate = async () => {
+    if (busy) return;
     const trimmed = draft.trim();
     if (trimmed.length < 3 && draftImages.length === 0) {
       toast.error(UI.keepFewWords);
@@ -569,35 +570,19 @@ function TimelineEntry({
     }
     setBusy(true);
     try {
-      const priorEntries = thread.entries
-        .filter((e) => e.id !== entry.id && e.createdAt < entry.createdAt)
-        .map((e) => ({
-          createdAt: e.createdAt,
-          mode: e.mode,
-          userInput: e.userInput,
-          summary: e.result.summary,
-          flag: e.result.flag,
-          flag_color: e.result.flag_color,
-          pattern_tag: e.result.pattern_tag,
-          communication_dynamic: e.result.communication_dynamic,
-          pattern_over_time: e.result.pattern_over_time,
-          reality_check: e.result.reality_check,
-          hadImages: !!(e.images && e.images.length > 0),
-        }));
+      const priorEntries = buildPriorEntries(thread.entries, {
+        excludeId: entry.id,
+        beforeCreatedAt: entry.createdAt,
+      });
 
       const imagesForAi = draftImages.length > 0 ? draftImages : undefined;
-      const { data, error } = await supabase.functions.invoke("analyze", {
-        body: {
-          text: trimmed,
-          mode: entry.mode,
-          images: imagesForAi,
-          personName: thread.name,
-          priorEntries,
-        },
+      const result = await invokeAnalyze({
+        text: trimmed,
+        mode: entry.mode,
+        images: imagesForAi,
+        personName: thread.name,
+        priorEntries,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const result = data as AnalysisResult;
       if (result?.language) setStoredLang(result.language);
 
       const imagesForDb = draftImages.length > 0 ? draftImages : null;
@@ -613,35 +598,20 @@ function TimelineEntry({
   };
 
   const regenerateOnly = async () => {
+    if (busy) return;
     setBusy(true);
     try {
-      const priorEntries = thread.entries
-        .filter((e) => e.id !== entry.id && e.createdAt < entry.createdAt)
-        .map((e) => ({
-          createdAt: e.createdAt,
-          mode: e.mode,
-          userInput: e.userInput,
-          summary: e.result.summary,
-          flag: e.result.flag,
-          flag_color: e.result.flag_color,
-          pattern_tag: e.result.pattern_tag,
-          communication_dynamic: e.result.communication_dynamic,
-          pattern_over_time: e.result.pattern_over_time,
-          reality_check: e.result.reality_check,
-          hadImages: !!(e.images && e.images.length > 0),
-        }));
-      const { data, error } = await supabase.functions.invoke("analyze", {
-        body: {
-          text: entry.userInput,
-          mode: entry.mode,
-          images: entry.images,
-          personName: thread.name,
-          priorEntries,
-        },
+      const priorEntries = buildPriorEntries(thread.entries, {
+        excludeId: entry.id,
+        beforeCreatedAt: entry.createdAt,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const result = data as AnalysisResult;
+      const result = await invokeAnalyze({
+        text: entry.userInput,
+        mode: entry.mode,
+        images: entry.images,
+        personName: thread.name,
+        priorEntries,
+      });
       if (result?.language) setStoredLang(result.language);
       await updateEntryDb(entry.id, { result });
       onUpdated({ ...entry, result });
