@@ -509,21 +509,25 @@ SECTION PURPOSES (each must add a NEW angle — no overlap, no restating events)
 - intentions (Võimalikud kavatsused): interpret what the person's BEHAVIOR practically suggests — effort, intention, consistency, comfort, emotional investment, social behavior. Do NOT predict romance or label what they "want". Good: "Ta otsib aktiivselt põhjuseid suhtlust jätkata ka väljaspool algset konteksti." / "Tema käitumine viitab soovile hoida ühendust järjepidevalt ja loomulikult." / "Ta ei hoia vestlust ainult viisakuse tasemel, vaid liigub teadlikult isiklikumate teemade poole." Banned: "ta tahab suhet", "ta näeb sinus partnerit".
 - meaning (Mida see võib tähendada): interpret the emotional MEANING of the dynamic for the user — psychological insight, emotional interpretation. NOT relationship forecasting, NOT a re-summary. Good: "Selline aeglane ja loomulik areng võib mõjuda turvalisemalt kui väga kiire intensiivsus." / "Mugavus näib tekkivat läbi järjepideva suhtlemise, mitte ainult tugevate hetkede." Must NOT repeat ideas already stated in dynamic / hidden_signals / intentions.
 - if_nothing_changes (rendered as "Oluline tähelepanek" / "Tasub märgata"): ONE meaningful psychological or social observation that adds genuine value — a specific, overlooked nuance. Observant, not predictive. Good: "Tähelepanuväärne on see, et vestlus ei püsi ainult flirtival tasandil, vaid liigub loomulikult ka igapäevaelu ja haavatavamate teemade juurde." / "Kuigi suhtlus on mänguline, tundub selle all olevat ka päris soov teineteist mõista." / "Vestluse tempo ei tundu sunnitud, vaid kujuneb loomulikult mõlema panusest." Do NOT forecast. Do NOT repeat earlier sections.
-- reality_check: a SPECIFIC, quietly insightful observation shaped by the exact emotional nuance of THIS thread and THIS interaction — never a reusable wisdom sentence. MAX 1-2 short sentences. It should highlight a subtle emotional truth, notice a small human behaviour pattern, or point out an understated social/emotional dynamic that THIS particular situation surfaces. Must feel like a real thoughtful observation someone could genuinely arrive at after reflecting on THIS conversation — not a quote, not advice, not philosophy filler.
-  HARD BANS — never produce these:
-    • Generic "deep" statements or universal relationship advice ("Lähedus kasvab ajaga.", "Tõeline side ei vaja sõnu.", "Usaldus on suhte alus.")
-    • Recycled wisdom / motivational quote energy ("Kõige ilusamad asjad…", "Päris tunded räägivad ise enda eest…")
-    • Therapist clichés ("Oluline on iseennast kuulata.", "Anna endale aega.")
-    • Abstract philosophical filler that could fit ANY relationship
-    • Sentences starting with "Kõige…", "Päris…", "Tõeline…", "Iga suhe…", "Armastus on…", "Lähedus on…" used as universal proverbs
-    • Repeating analysis from dynamic / hidden_signals / intentions / meaning / if_nothing_changes
-    • Mentioning the person's name, specific events, or any literal detail from the story (no "Tema/Ta…" openings)
-  SPECIFICITY TEST (apply before output): Could this exact sentence be pasted verbatim into a different person's reality_check about a different situation and still feel true? If YES → it's too generic, rewrite. The sentence must only make sense for THIS stage, THIS rhythm, THIS particular emotional nuance.
-  HOW to ground it: anchor the observation in the texture of THIS dynamic — the specific kind of pacing, the specific kind of comfort or hesitation, the specific shift happening — but describe it abstractly enough not to retell events. Name the felt quality, not the facts.
-  EMOTIONAL EVOLUTION: Lighter and observational early in a thread; more layered and psychologically nuanced as the thread deepens. Match the maturity of the insight to where this relationship actually is.
-  ANTI-REPETITION: Compare against previous reality_checks in the thread context. Never reuse the same emotional angle, structure, or framing twice in the same thread. Every entry must feel organically different.
-  STYLE: human, calm, specific, quietly observant, slightly emotionally intelligent — not dramatic, not poetic-for-its-own-sake, not inspirational.
-  Good (note how each only fits ONE specific kind of moment): "On huvitav, kuidas alguse kerge ettevaatlikkus hakkab vaikselt asenduma sellise kerge mugavusega, kus enam ei pea iga sõna ette mõtlema." / "Selles vestluses on märgata, et naljad ei ole enam ainult pinge maandamiseks — nende all hakkab paistma ka tahtmine teist päriselt näha." / "Kummaline, kuidas väike muutus vastamise kiiruses võib öelda rohkem kui sõnad ise." / "Tundub, et see hetk, kus kumbki enam ei püüa erilist muljet jätta, on siin tegelikult kõige olulisem." Bad (too generic, banned): "Päris huvi paistab välja väikestes hetkedes." / "Lähedus kasvab märkamatult." / "Mugavus tekib enne suuri sõnu." — these could fit any thread, so they are forbidden.
+- reality_check: a short, emotionally intelligent reflection or quiet wisdom line INSPIRED by the current situation. MAX 1-2 short sentences. It MAY sound lightly philosophical, feel like a thoughtful life observation, carry emotional insight, or feel quietly poetic — but it must remain natural Estonian, emotionally grounded, subtle (never dramatic), and clearly connected to the emotional dynamic of THIS interaction. Should feel like a naturally phrased emotional realization a real person could pause and think about afterwards.
+   HARD BANS — never produce these:
+     • Therapist-style analysis or advice ("Oluline on iseennast kuulata.", "Anna endale aega.")
+     • Direct summary of the situation, repeating concrete events, or naming the person ("Tema/Ta…", "Jakob…")
+     • Explaining obvious facts already in the entry
+     • AI-style "deep talk" / motivational quote energy ("Kõige ilusamad asjad…", "Päris tunded räägivad ise enda eest…")
+     • Repeating analysis from dynamic / hidden_signals / intentions / meaning / if_nothing_changes
+   FORBIDDEN OPENER STRUCTURES (never start with these — too AI-formulaic):
+     • "On huvitav, kuidas…"
+     • "Mõnikord…"
+     • "Tihti inimesed…" / "Tihti…"
+     • "Elus…"
+     • "Sageli juhtub…" / "Sageli…"
+     • "Kummaline, kuidas…"
+     • "Tundub, et…"
+   Vary sentence openings naturally — start with the noun, the feeling, the dynamic itself; do not lean on formulaic openers.
+   EVOLUTION ACROSS THE THREAD (critical): Reality Checks MUST evolve with the relationship. Compare against ALL previous reality_checks in the thread context. NEVER reuse the same emotional lesson, the same wording, the same philosophical idea, or a slightly rephrased version of an earlier one. If earlier entries explored comfort / emotional safety / growing interest, newer entries should naturally move into different territory — trust, vulnerability, emotional pacing, mutual effort, uncertainty, emotional rhythm, attachment patterns, emotional reciprocity, comfort with silence, consistency, emotional openness, or whatever new nuance THIS entry surfaces. Each Reality Check should reflect the current emotional stage, what has specifically changed, and the newest emotional nuance introduced in this entry.
+   STYLE: short, memorable, emotionally true, slightly philosophical, human-sounding, context-inspired rather than generic. Calm and grounded, not dramatic.
+   Good examples (each fits ONE specific kind of moment, no formulaic opener): "Usaldus kasvab tihti just nendes hetkedes, kus enam ei pea midagi tõestama." / "Vaikus kahe inimese vahel hakkab millalgi rääkima rohkem kui sõnad." / "Vastastikune pingutus on harva võrdselt jagatud — küsimus on pigem selles, kas mõlemad seda märkavad." / "Lähedus liigub sageli aeglasemalt kui ootused, ja see ei pruugi olla halb märk." / "Haavatavus tuleb harva korraga; see lekib hetkedes, mida ise ei plaanigi." Bad (banned openers or generic wisdom): "On huvitav, kuidas…", "Mõnikord on parem vaikida.", "Lähedus kasvab ajaga.", "Päris tunded räägivad ise enda eest."
 - reflection: a short, open question or thought worth sitting with.
 - action: one small, concrete next step (a sentence fragment is fine).
 
