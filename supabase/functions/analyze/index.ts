@@ -520,6 +520,11 @@ SIGNAAL BREAKDOWN — STRICT UI LIMITS
 - Good: "Vestlus liigub loomulikult mõlemalt poolt." / "Ta hoiab suhtlust järjepidevalt üleval." / "Soe, avatud ja pingevaba." / "Püsib stabiilse rütmiga."
 - Bad: "Emotsionaalne toon on soe ja avatud, mis viitab…" (label repetition + too long). NEVER write just "Kõrge.", "Madal.", "Keskmine.", "High.", "Low."
 
+NO LABEL REPETITION — APPLIES TO EVERY SECTION
+- This rule applies to ALL sections, not just signal breakdown. The section title is already visible in the UI — never restate or directly reformulate it as the opening of the text.
+- Forbidden openings: "Algatus liigub…", "Panus on…", "Järjepidevus on…", "Emotsionaalne toon on…", "Dünaamika on…", "Kavatsused on…", "Varjatud vihjed on…", "Muster on…", "Mida see võib tähendada on…". Same applies to English equivalents.
+- Write naturally and indirectly — describe the thing without naming the category. Good: "Mõlemad hoiavad vestlust aktiivselt üleval." / "Kumbki ei jää ainult vastaja rolli." / "Suhtlus püsib stabiilse rütmiga." / "Õhkkond tundub rahulik ja mugav." / "Vestlus liigub mõlemalt poolt loomulikult."
+
 LENGTH
 - summary: 1 sentence. pattern_tag: 2–4 words.
 - Most sections: 1–3 sentences. Reality_check: 1 sentence. Reflection: 1 short sentence/question.
