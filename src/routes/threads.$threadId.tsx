@@ -25,6 +25,29 @@ export const Route = createFileRoute("/threads/$threadId")({
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_SCREENSHOTS = 10;
 const COLLAPSE_CHAR_THRESHOLD = 320;
+const ANALYZE_HISTORY_LIMIT = 8;
+const ANALYZE_RECENT_DETAIL = 2;
+
+type AnalyzePriorEntry = {
+  createdAt: number;
+  mode: Mode;
+  userInput: string;
+  summary: string;
+  flag: string;
+  flag_color: AnalysisResult["flag_color"];
+  pattern_tag?: string;
+  trend?: AnalysisResult["trend"];
+  memory?: string;
+  hadImages?: boolean;
+};
+
+type AnalyzePayload = {
+  text: string;
+  mode: Mode;
+  images?: string[];
+  personName: string;
+  priorEntries: AnalyzePriorEntry[];
+};
 
 // strings come from useUi()
 
@@ -88,6 +111,94 @@ function fileToDataUrl(file: File): Promise<string> {
     r.onerror = reject;
     r.readAsDataURL(file);
   });
+}
+
+function compactForAnalyze(value: string | undefined, max: number) {
+  if (!value) return "";
+  const cleaned = value.replace(/\s+/g, " ").trim();
+  return cleaned.length > max ? `${cleaned.slice(0, max - 1)}…` : cleaned;
+}
+
+function buildPriorEntries(
+  entries: ThreadEntry[],
+  options?: { excludeId?: string; beforeCreatedAt?: number },
+): AnalyzePriorEntry[] {
+  const fingerprints = new Set<string>();
+
+  return entries
+    .filter((entry) => {
+      if (options?.excludeId && entry.id === options.excludeId) return false;
+      if (options?.beforeCreatedAt !== undefined && entry.createdAt >= options.beforeCreatedAt) return false;
+      return true;
+    })
+    .slice(-ANALYZE_HISTORY_LIMIT)
+    .map((entry, index, filtered) => {
+      const result = entry.result;
+      const isRecent = index >= filtered.length - ANALYZE_RECENT_DETAIL;
+      const memory = compactForAnalyze(
+        [result.communication_dynamic, result.pattern_over_time, result.reality_check]
+          .filter(Boolean)
+          .join(" "),
+        isRecent ? 180 : 110,
+      );
+
+      return {
+        createdAt: entry.createdAt,
+        mode: entry.mode,
+        userInput: compactForAnalyze(entry.userInput, isRecent ? 260 : 120),
+        summary: compactForAnalyze(result.summary, isRecent ? 180 : 110),
+        flag: compactForAnalyze(result.flag, 40),
+        flag_color: result.flag_color,
+        pattern_tag: compactForAnalyze(result.pattern_tag, 40) || undefined,
+        trend: result.trend,
+        memory: memory || undefined,
+        hadImages: !!entry.images?.length,
+      } satisfies AnalyzePriorEntry;
+    })
+    .filter((entry) => {
+      const key = [entry.createdAt, entry.mode, entry.userInput, entry.summary, entry.flag, entry.memory].join("|");
+      if (fingerprints.has(key)) return false;
+      fingerprints.add(key);
+      return true;
+    });
+}
+
+async function invokeAnalyze(payload: AnalyzePayload): Promise<AnalysisResult> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const raw = await response.text();
+  let parsed: any = null;
+
+  try {
+    parsed = raw ? JSON.parse(raw) : null;
+  } catch {
+    parsed = raw ? { error: raw } : null;
+  }
+
+  if (!response.ok) {
+    const baseMessage = parsed?.error || parsed?.message || "Edge Function returned a non-2xx status code";
+    const details = parsed?.details ? ` — ${parsed.details}` : "";
+    throw new Error(`${baseMessage}${details}`);
+  }
+
+  if (parsed?.error) {
+    const details = parsed?.details ? ` — ${parsed.details}` : "";
+    throw new Error(`${parsed.error}${details}`);
+  }
+
+  return parsed as AnalysisResult;
 }
 
 function ThreadPage() {
@@ -451,6 +562,7 @@ function TimelineEntry({
   };
 
   const saveAndRegenerate = async () => {
+    if (busy) return;
     const trimmed = draft.trim();
     if (trimmed.length < 3 && draftImages.length === 0) {
       toast.error(UI.keepFewWords);
@@ -458,35 +570,19 @@ function TimelineEntry({
     }
     setBusy(true);
     try {
-      const priorEntries = thread.entries
-        .filter((e) => e.id !== entry.id && e.createdAt < entry.createdAt)
-        .map((e) => ({
-          createdAt: e.createdAt,
-          mode: e.mode,
-          userInput: e.userInput,
-          summary: e.result.summary,
-          flag: e.result.flag,
-          flag_color: e.result.flag_color,
-          pattern_tag: e.result.pattern_tag,
-          communication_dynamic: e.result.communication_dynamic,
-          pattern_over_time: e.result.pattern_over_time,
-          reality_check: e.result.reality_check,
-          hadImages: !!(e.images && e.images.length > 0),
-        }));
+      const priorEntries = buildPriorEntries(thread.entries, {
+        excludeId: entry.id,
+        beforeCreatedAt: entry.createdAt,
+      });
 
       const imagesForAi = draftImages.length > 0 ? draftImages : undefined;
-      const { data, error } = await supabase.functions.invoke("analyze", {
-        body: {
-          text: trimmed,
-          mode: entry.mode,
-          images: imagesForAi,
-          personName: thread.name,
-          priorEntries,
-        },
+      const result = await invokeAnalyze({
+        text: trimmed,
+        mode: entry.mode,
+        images: imagesForAi,
+        personName: thread.name,
+        priorEntries,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const result = data as AnalysisResult;
       if (result?.language) setStoredLang(result.language);
 
       const imagesForDb = draftImages.length > 0 ? draftImages : null;
@@ -502,35 +598,20 @@ function TimelineEntry({
   };
 
   const regenerateOnly = async () => {
+    if (busy) return;
     setBusy(true);
     try {
-      const priorEntries = thread.entries
-        .filter((e) => e.id !== entry.id && e.createdAt < entry.createdAt)
-        .map((e) => ({
-          createdAt: e.createdAt,
-          mode: e.mode,
-          userInput: e.userInput,
-          summary: e.result.summary,
-          flag: e.result.flag,
-          flag_color: e.result.flag_color,
-          pattern_tag: e.result.pattern_tag,
-          communication_dynamic: e.result.communication_dynamic,
-          pattern_over_time: e.result.pattern_over_time,
-          reality_check: e.result.reality_check,
-          hadImages: !!(e.images && e.images.length > 0),
-        }));
-      const { data, error } = await supabase.functions.invoke("analyze", {
-        body: {
-          text: entry.userInput,
-          mode: entry.mode,
-          images: entry.images,
-          personName: thread.name,
-          priorEntries,
-        },
+      const priorEntries = buildPriorEntries(thread.entries, {
+        excludeId: entry.id,
+        beforeCreatedAt: entry.createdAt,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const result = data as AnalysisResult;
+      const result = await invokeAnalyze({
+        text: entry.userInput,
+        mode: entry.mode,
+        images: entry.images,
+        personName: thread.name,
+        priorEntries,
+      });
       if (result?.language) setStoredLang(result.language);
       await updateEntryDb(entry.id, { result });
       onUpdated({ ...entry, result });
@@ -908,6 +989,7 @@ function Composer({
   };
 
   const analyze = async () => {
+    if (loading) return;
     const trimmed = text.trim();
     const hasImages = mode === "message" && images.length > 0;
     if (trimmed.length < 3 && !hasImages) {
@@ -916,32 +998,14 @@ function Composer({
     }
     setLoading(true);
     try {
-      const priorEntries = thread.entries.map((e) => ({
-        createdAt: e.createdAt,
-        mode: e.mode,
-        userInput: e.userInput,
-        summary: e.result.summary,
-        flag: e.result.flag,
-        flag_color: e.result.flag_color,
-        pattern_tag: e.result.pattern_tag,
-        communication_dynamic: e.result.communication_dynamic,
-        pattern_over_time: e.result.pattern_over_time,
-        reality_check: e.result.reality_check,
-        hadImages: !!(e.images && e.images.length > 0),
-      }));
-
-      const { data, error } = await supabase.functions.invoke("analyze", {
-        body: {
-          text: trimmed,
-          mode,
-          images: hasImages ? images : undefined,
-          personName: thread.name,
-          priorEntries,
-        },
+      const priorEntries = buildPriorEntries(thread.entries);
+      const res = await invokeAnalyze({
+        text: trimmed,
+        mode,
+        images: hasImages ? images : undefined,
+        personName: thread.name,
+        priorEntries,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const res = data as AnalysisResult;
       if (res?.language) setStoredLang(res.language);
 
       const imagesToSave = hasImages ? images : undefined;
