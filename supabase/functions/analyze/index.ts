@@ -523,8 +523,8 @@ FINAL CHECK before returning: re-read for repeated phrases across sections, name
         { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
-      temperature: 0.5,
-      max_tokens: 2200,
+      temperature: 0.65,
+      max_tokens: 2600,
     });
 
     let activePayload = gatewayPayload;
