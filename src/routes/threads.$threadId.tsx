@@ -867,7 +867,15 @@ function Composer({
       }
       try { next.push(await fileToDataUrl(f)); } catch {}
     }
-    if (next.length) setImages((prev) => [...prev, ...next]);
+    if (next.length) setImages((prev) => {
+      const room = MAX_SCREENSHOTS - prev.length;
+      if (room <= 0) {
+        toast.error(UI.imageLimitReached);
+        return prev;
+      }
+      if (next.length > room) toast.message(UI.imageLimitTrimmed);
+      return [...prev, ...next.slice(0, room)];
+    });
   };
 
   useEffect(() => {
