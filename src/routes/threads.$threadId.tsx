@@ -173,6 +173,7 @@ async function invokeAnalyze(payload: AnalyzePayload): Promise<AnalysisResult> {
     headers: {
       "Content-Type": "application/json",
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(import.meta.env.DEV ? { "x-debug-analyze": "1" } : {}),
       ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
     },
     body: JSON.stringify(payload),
