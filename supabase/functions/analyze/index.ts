@@ -392,6 +392,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const startedAt = Date.now();
+  const debugMode = isDevelopmentRequest(req);
 
   try {
     const { text, mode, images, personName, priorEntries } = await req.json();
@@ -400,13 +401,11 @@ serve(async (req) => {
 
     const currentText = compact(typeof text === "string" ? text : "", MAX_TEXT_LENGTH);
     const hasText = currentText.trim().length >= 3;
-    const allImages = Array.isArray(images)
-      ? images.filter((image: unknown) => typeof image === "string" && image.startsWith("data:") && image.length <= MAX_IMAGE_DATA_URL_CHARS)
-      : [];
-    const cappedImages = allImages.slice(0, MAX_IMAGES);
+    const { valid: sanitizedImages, dropped: droppedImages } = sanitizeImages(images);
+    const cappedImages = sanitizedImages.slice(0, MAX_IMAGES);
     const hasImages = cappedImages.length > 0;
 
-    const allPriors: PriorEntry[] = dedupePriorEntries(Array.isArray(priorEntries) ? priorEntries : []);
+    const allPriors: PriorEntry[] = sanitizePriorEntries(priorEntries);
     const historyWindow = allPriors.slice(-(OLDER_WINDOW + RECENT_DETAILED));
     const recent = historyWindow.slice(-RECENT_DETAILED);
     const older = historyWindow.slice(0, Math.max(0, historyWindow.length - RECENT_DETAILED));
@@ -491,21 +490,27 @@ Rules:
 - If the current moment is ambiguous but the longer arc is warm, say so.
 - Never output markdown, code fences, or commentary outside JSON.`;
 
-    const userContent: any[] = [
+    const baseUserText = [
+      `Mode: ${mode === "message" ? "conversation" : "situation"}`,
+      `Thread label: ${typeof personName === "string" && personName.trim() ? compact(personName, 120) : "—"}`,
+      threadSummary,
+      `NEW ENTRY:\n${hasText ? currentText : "The user shared screenshots only."}`,
+      hasImages ? `The screenshots are supporting evidence for the same thread. Count: ${cappedImages.length}.` : "",
+      droppedImages > 0 ? `Some screenshots were ignored because their format was invalid.` : "",
+    ].filter(Boolean).join("\n\n");
+
+    const userContent: GatewayContentPart[] = [
       {
         type: "text",
-        text: [
-          `Mode: ${mode === "message" ? "conversation" : "situation"}`,
-          `Thread label: ${personName ?? "—"}`,
-          threadSummary,
-          `NEW ENTRY:\n${hasText ? currentText : "The user shared screenshots only."}`,
-          hasImages ? `The screenshots are supporting evidence for the same thread. Count: ${cappedImages.length}.` : "",
-        ].filter(Boolean).join("\n\n"),
+        text: baseUserText,
       },
-      ...cappedImages.map((url) => ({ type: "image_url", image_url: { url } })),
+      ...cappedImages
+        .map((url) => sanitizeImageDataUrl(url))
+        .filter((url): url is string => Boolean(url))
+        .map((url) => ({ type: "image_url", image_url: { url } })),
     ];
 
-    const gatewayPayload = {
+    const gatewayPayload = sanitizeJson<GatewayPayload>({
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
@@ -513,15 +518,42 @@ Rules:
       ],
       temperature: 0.5,
       max_tokens: 2200,
-    };
+    });
+
+    let activePayload = gatewayPayload;
+
+    try {
+      validateGatewayPayload(activePayload);
+    } catch (validationError) {
+      if (!hasImages) throw validationError;
+
+      console.warn("analyze payload validation failed, retrying text-only", JSON.stringify({
+        message: validationError instanceof Error ? validationError.message : String(validationError),
+      }));
+
+      activePayload = sanitizeJson<GatewayPayload>({
+        ...gatewayPayload,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: [{ type: "text", text: `${baseUserText}\n\nScreenshot processing failed, so analyze the text and thread memory only.` }] },
+        ],
+      });
+
+      validateGatewayPayload(activePayload);
+    }
 
     console.log("analyze request", JSON.stringify({
       textChars: currentText.length,
       imagesSent: cappedImages.length,
+      imagesDropped: droppedImages,
       priorsReceived: Array.isArray(priorEntries) ? priorEntries.length : 0,
       priorsSent: historyWindow.length,
       hasPriors,
     }));
+
+    if (debugMode) {
+      console.log("analyze request payload", JSON.stringify(redactPayloadForLogs(activePayload)));
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -529,7 +561,7 @@ Rules:
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(gatewayPayload),
+      body: JSON.stringify(activePayload),
     });
 
     const rawBody = await response.text();
