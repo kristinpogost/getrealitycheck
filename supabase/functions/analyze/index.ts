@@ -347,7 +347,7 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
       meaning: et ? "Mida see võib tähendada" : "Meaning",
       reflection: et ? "Mõttekoht" : "Reflection",
       reality_check: et ? "Reaalsuskontroll" : "Reality check",
-      if_nothing_changes: et ? "Kui midagi ei muutu" : "If nothing changes",
+      if_nothing_changes: et ? "Oluline tähelepanek" : "Worth noticing",
       action: et ? "Järgmine samm" : "Action",
       pattern_over_time: et ? "Muster ajas" : "Pattern over time",
       whats_changing: et ? "Mis muutub" : "What's changing",
