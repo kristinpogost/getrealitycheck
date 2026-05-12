@@ -568,16 +568,21 @@ Rules:
 
     if (!response.ok) {
       console.error("Gateway error", JSON.stringify({ status: response.status, body: rawBody.slice(0, 1200) }));
+      if (debugMode) {
+        console.log("analyze failed payload", JSON.stringify(redactPayloadForLogs(activePayload)));
+      }
       const details = rawBody.slice(0, 500) || "Unknown AI gateway error";
       return new Response(JSON.stringify({
         error: response.status === 429
           ? "Rate limit exceeded. Please try again later."
           : response.status === 402
             ? "Credits exhausted. Please add funds to your Lovable AI workspace."
+            : response.status === 400
+              ? "AI request body was invalid"
             : "AI service error",
         details,
       }), {
-        status: response.status === 429 || response.status === 402 ? response.status : 500,
+        status: response.status === 429 || response.status === 402 || response.status === 400 ? response.status : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -614,7 +619,7 @@ Rules:
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("analyze error", JSON.stringify({ message, durationMs: Date.now() - startedAt }));
+    console.error("analyze error", JSON.stringify({ message, durationMs: Date.now() - startedAt, debugMode }));
     const languageHint = "en";
     return new Response(JSON.stringify({
       ...fallbackResult(languageHint, message),
