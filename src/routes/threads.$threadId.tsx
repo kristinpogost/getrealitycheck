@@ -23,6 +23,7 @@ export const Route = createFileRoute("/threads/$threadId")({
 });
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_SCREENSHOTS = 10;
 const COLLAPSE_CHAR_THRESHOLD = 320;
 
 // strings come from useUi()
