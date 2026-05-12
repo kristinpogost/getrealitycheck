@@ -336,10 +336,10 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
       pattern_tag: et ? "Mustri nimi" : "Pattern tag",
       dynamic: et ? "Dünaamika" : "Dynamic",
       hidden_signals: et ? "Varjatud vihjed" : "Hidden signals",
-      intentions: et ? "Võimalikud kavatsused" : "Intentions",
+      intentions: et ? "Kavatsused" : "Intentions",
       flag: et ? "Lipp" : "Flag",
       flag_reasoning: et ? "Miks see lipp" : "Why this flag",
-      signal_breakdown: et ? "Jaotus" : "Breakdown",
+      signal_breakdown: et ? "Signaalide jaotus" : "Signal breakdown",
       initiative: et ? "Algatus" : "Initiative",
       effort: et ? "Panus" : "Effort",
       consistency: et ? "Järjepidevus" : "Consistency",
@@ -368,10 +368,10 @@ function normalizeResult(raw: any, languageHint: string, details?: string): Anal
     flag_color: safeColor(raw?.flag_color),
     flag_reasoning: safeString(raw?.flag_reasoning, fallbackResult(language, details).flag_reasoning),
     signal_breakdown: {
-      initiative: safeString(raw?.signal_breakdown?.initiative, fallbackResult(language, details).signal_breakdown.initiative, 120),
-      effort: safeString(raw?.signal_breakdown?.effort, fallbackResult(language, details).signal_breakdown.effort, 120),
-      consistency: safeString(raw?.signal_breakdown?.consistency, fallbackResult(language, details).signal_breakdown.consistency, 120),
-      emotional_tone: safeString(raw?.signal_breakdown?.emotional_tone, fallbackResult(language, details).signal_breakdown.emotional_tone, 120),
+      initiative: safeString(raw?.signal_breakdown?.initiative, fallbackResult(language, details).signal_breakdown.initiative, 90),
+      effort: safeString(raw?.signal_breakdown?.effort, fallbackResult(language, details).signal_breakdown.effort, 90),
+      consistency: safeString(raw?.signal_breakdown?.consistency, fallbackResult(language, details).signal_breakdown.consistency, 90),
+      emotional_tone: safeString(raw?.signal_breakdown?.emotional_tone, fallbackResult(language, details).signal_breakdown.emotional_tone, 90),
     },
     meaning: safeString(raw?.meaning, fallbackResult(language, details).meaning),
     reflection: safeString(raw?.reflection, fallbackResult(language, details).reflection, 240),
@@ -494,19 +494,35 @@ SECTION PURPOSES (each must add a NEW angle — no overlap, no restating events)
 - reflection: a short, open question or thought worth sitting with.
 - action: one small, concrete next step (a sentence fragment is fine).
 
-SIGNAL BREAKDOWN
-- Each of initiative / effort / consistency / emotional_tone must be a short natural-language observation (8–18 words), not a label. NEVER write just "Kõrge.", "Madal.", "Keskmine.", "High.", "Low."
-- Good: "Ta näib olevat järjepidev algataja, sina vastad samaväärselt." / "Vestlus liigub loomulikult mõlemalt poolt."
+SIGNAAL BREAKDOWN — STRICT UI LIMITS
+- Each of initiative / effort / consistency / emotional_tone MUST be ONE short sentence, ideally under ~90 characters. Hard ceiling: 90 chars. The card cannot overflow or truncate.
+- This section is for QUICK SIGNAL SCANNING, not detailed analysis. Be compact and readable at a glance.
+- NEVER repeat the field label inside the text. The label "Emotsionaalne toon" is already shown — do NOT start the text with "Emotsionaalne toon on…". Same for "Järjepidevus on…", "Algatus on…", "Panus on…". Just describe the quality directly.
+- Good: "Vestlus liigub loomulikult mõlemalt poolt." / "Ta hoiab suhtlust järjepidevalt üleval." / "Soe, avatud ja pingevaba." / "Püsib stabiilse rütmiga."
+- Bad: "Emotsionaalne toon on soe ja avatud, mis viitab…" (label repetition + too long). NEVER write just "Kõrge.", "Madal.", "Keskmine.", "High.", "Low."
 
 LENGTH
 - summary: 1 sentence. pattern_tag: 2–4 words.
 - Most sections: 1–3 sentences. Reality_check: 1 sentence. Reflection: 1 short sentence/question.
 - Be concise. Cut filler. No bullet lists in any string.
 
-UI_LABELS
-- Localize all ui_labels into the same language as the analysis. Estonian labels: "Lühikokkuvõte", "Mustri nimi", "Dünaamika", "Varjatud vihjed", "Võimalikud kavatsused", "Lipp", "Miks see lipp", "Jaotus", "Algatus", "Panus", "Järjepidevus", "Emotsionaalne toon", "Mida see võib tähendada", "Mõttekoht", "Reaalsuskontroll", "Oluline tähelepanek", "Järgmine samm", "Muster ajas", "Mis muutub". The if_nothing_changes label MUST be "Oluline tähelepanek" (or "Tasub märgata") in Estonian / "Worth noticing" in English — never "Kui midagi ei muutu" / "If nothing changes".
+UI_LABELS — ESTONIAN ONLY (when language is Estonian)
+- ALL ui_labels MUST be in Estonian when the analysis is Estonian. Never mix English labels into an Estonian response.
+- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas", whats_changing="Mis muutub".
+- Forbidden labels in Estonian output: "Intentions", "Dynamics", "Hidden signals", "Reality check", "Breakdown", "Jaotus" (alone), "Võimalikud kavatsused", "Kui midagi ei muutu".
 
-FINAL CHECK before returning: re-read for repeated phrases across sections, name overuse, awkward translations, and dashboard tone. Rewrite anything that sounds robotic or duplicative.`;
+ANTI-FANFICTION / ANTI-ROMANCE-INFLATION (CRITICAL)
+- Do NOT sound romantic, cinematic, dramatic, or fanfiction-like. No "saatuse tunne", no idealized romance narration, no emotional inflation.
+- Stay grounded, socially intelligent, behavioral. Sound like a perceptive human observer, NOT a romance narrator. Never sound like the app is "shipping" two people together.
+
+FINAL VALIDATION before returning:
+- Does every section add NEW information? (no overlap)
+- Does any sentence repeat its own label?
+- Does any signal_breakdown field exceed ~90 chars or risk overflow?
+- Does any wording sound AI-generated, unnatural in Estonian, or romantic-fantasy?
+- Are all ui_labels in Estonian (when analysis is Estonian)?
+- Does any conclusion sound too certain or predictive?
+If any answer is yes — rewrite before returning.`;
 
     const baseUserText = [
       `Mode: ${mode === "message" ? "conversation" : "situation"}`,
