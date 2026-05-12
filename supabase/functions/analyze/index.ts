@@ -24,6 +24,28 @@ const OLDER_WINDOW = 6;
 const MAX_TEXT_LENGTH = 3000;
 const MAX_JSON_RESPONSE_CHARS = 14000;
 const MAX_IMAGE_DATA_URL_CHARS = 1_800_000;
+const SUPPORTED_IMAGE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+type GatewayContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
+type GatewayMessage = {
+  role: "system" | "user";
+  content: string | GatewayContentPart[];
+};
+
+type GatewayPayload = {
+  model: string;
+  messages: GatewayMessage[];
+  temperature: number;
+  max_tokens: number;
+};
 
 type AnalysisResult = {
   language: string;
@@ -72,10 +94,53 @@ type AnalysisResult = {
   };
 };
 
+function stripControlChars(value: string) {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
+}
+
 function compact(value: string | undefined, max: number) {
   if (!value) return "";
-  const cleaned = value.replace(/\s+/g, " ").trim();
+  const cleaned = stripControlChars(value).replace(/\s+/g, " ").trim();
   return cleaned.length > max ? `${cleaned.slice(0, max - 1)}…` : cleaned;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function sanitizeNullableString(value: unknown, max: number) {
+  const cleaned = compact(typeof value === "string" ? value : "", max);
+  return cleaned || undefined;
+}
+
+function sanitizeMode(value: unknown): PriorEntry["mode"] {
+  return value === "message" ? "message" : "situation";
+}
+
+function sanitizePriorEntries(entries: unknown): PriorEntry[] {
+  if (!Array.isArray(entries)) return [];
+
+  return dedupePriorEntries(
+    entries
+      .filter(isRecord)
+      .map((entry) => ({
+        createdAt: Number.isFinite(entry.createdAt) ? Number(entry.createdAt) : Date.now(),
+        mode: sanitizeMode(entry.mode),
+        userInput: compact(typeof entry.userInput === "string" ? entry.userInput : "", 220),
+        summary: compact(typeof entry.summary === "string" ? entry.summary : "", 180),
+        flag: compact(typeof entry.flag === "string" ? entry.flag : "", 40) || "Kollane lipp",
+        flag_color: entry.flag_color === "green" || entry.flag_color === "yellow" || entry.flag_color === "red"
+          ? entry.flag_color
+          : "yellow",
+        pattern_tag: sanitizeNullableString(entry.pattern_tag, 50),
+        trend: entry.trend === "improving" || entry.trend === "declining" || entry.trend === "inconsistent" || entry.trend === "stable" || entry.trend === "new"
+          ? entry.trend
+          : undefined,
+        memory: sanitizeNullableString(entry.memory, 180),
+        hadImages: Boolean(entry.hadImages),
+      }))
+      .slice(-(OLDER_WINDOW + RECENT_DETAILED)),
+  );
 }
 
 function dedupePriorEntries(entries: PriorEntry[]) {
@@ -89,11 +154,137 @@ function dedupePriorEntries(entries: PriorEntry[]) {
 }
 
 function extractJsonObject(raw: string) {
-  const trimmed = raw.trim();
+  let trimmed = raw.trim();
+  trimmed = trimmed.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
   if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
   const match = trimmed.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Model returned non-JSON content");
-  return match[0];
+  return match[0]
+    .replace(/,\s*}/g, "}")
+    .replace(/,\s*]/g, "]")
+    .replace(/[\u0000-\u001F\u007F]/g, "");
+}
+
+function sanitizeImageDataUrl(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  const match = trimmed.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) return null;
+
+  const mime = match[1].toLowerCase() === "image/jpg" ? "image/jpeg" : match[1].toLowerCase();
+  if (!SUPPORTED_IMAGE_MIME_TYPES.has(mime)) return null;
+
+  const base64 = match[2].replace(/\s+/g, "");
+  if (!base64 || base64.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) return null;
+
+  const normalized = `data:${mime};base64,${base64}`;
+  return normalized.length <= MAX_IMAGE_DATA_URL_CHARS ? normalized : null;
+}
+
+function sanitizeImages(images: unknown) {
+  if (!Array.isArray(images)) return { valid: [] as string[], dropped: 0 };
+
+  const valid = images
+    .map((image) => sanitizeImageDataUrl(image))
+    .filter((image): image is string => Boolean(image));
+
+  return {
+    valid,
+    dropped: images.length - valid.length,
+  };
+}
+
+function sanitizeJson<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeJson(item))
+      .filter((item) => item !== undefined && item !== null) as T;
+  }
+
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, item]) => [key, sanitizeJson(item)])
+        .filter(([, item]) => item !== undefined && item !== null),
+    ) as T;
+  }
+
+  return value;
+}
+
+function validateGatewayPayload(payload: GatewayPayload) {
+  if (!payload.model || !Array.isArray(payload.messages) || payload.messages.length === 0) {
+    throw new Error("Generated AI payload is missing a valid model or messages array");
+  }
+
+  payload.messages.forEach((message, messageIndex) => {
+    if ((message.role !== "system" && message.role !== "user") || message.content === undefined || message.content === null) {
+      throw new Error(`Generated AI payload has an invalid message at index ${messageIndex}`);
+    }
+
+    if (Array.isArray(message.content)) {
+      if (message.content.length === 0) {
+        throw new Error(`Generated AI payload has an empty content array at message ${messageIndex}`);
+      }
+
+      message.content.forEach((part, partIndex) => {
+        if (part.type === "text") {
+          if (!part.text?.trim()) {
+            throw new Error(`Generated AI payload has an empty text part at message ${messageIndex}:${partIndex}`);
+          }
+          return;
+        }
+
+        if (part.type === "image_url") {
+          if (!part.image_url?.url || !sanitizeImageDataUrl(part.image_url.url)) {
+            throw new Error(`Generated AI payload has an invalid image part at message ${messageIndex}:${partIndex}`);
+          }
+          return;
+        }
+
+        throw new Error(`Generated AI payload has an unsupported content part at message ${messageIndex}:${partIndex}`);
+      });
+      return;
+    }
+
+    if (typeof message.content !== "string" || !message.content.trim()) {
+      throw new Error(`Generated AI payload has invalid string content at message ${messageIndex}`);
+    }
+  });
+}
+
+function redactPayloadForLogs(payload: GatewayPayload) {
+  return {
+    ...payload,
+    messages: payload.messages.map((message) => ({
+      ...message,
+      content: Array.isArray(message.content)
+        ? message.content.map((part) => part.type === "image_url"
+          ? {
+              type: "image_url",
+              image_url: {
+                url: `[data-url:${part.image_url.url.slice(5, part.image_url.url.indexOf(";"))};chars=${part.image_url.url.length}]`,
+              },
+            }
+          : part)
+        : message.content,
+    })),
+  };
+}
+
+function isDevelopmentRequest(req: Request) {
+  const origin = req.headers.get("origin") ?? "";
+  const referer = req.headers.get("referer") ?? "";
+  const host = req.headers.get("host") ?? "";
+  return (
+    req.headers.get("x-debug-analyze") === "1"
+    || origin.includes("localhost")
+    || referer.includes("localhost")
+    || origin.includes("-preview--")
+    || referer.includes("-preview--")
+    || host.includes("-preview--")
+  );
 }
 
 function safeString(value: unknown, fallback: string, max = 700) {
