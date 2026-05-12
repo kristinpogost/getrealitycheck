@@ -989,6 +989,7 @@ function Composer({
   };
 
   const analyze = async () => {
+    if (loading) return;
     const trimmed = text.trim();
     const hasImages = mode === "message" && images.length > 0;
     if (trimmed.length < 3 && !hasImages) {
@@ -997,32 +998,14 @@ function Composer({
     }
     setLoading(true);
     try {
-      const priorEntries = thread.entries.map((e) => ({
-        createdAt: e.createdAt,
-        mode: e.mode,
-        userInput: e.userInput,
-        summary: e.result.summary,
-        flag: e.result.flag,
-        flag_color: e.result.flag_color,
-        pattern_tag: e.result.pattern_tag,
-        communication_dynamic: e.result.communication_dynamic,
-        pattern_over_time: e.result.pattern_over_time,
-        reality_check: e.result.reality_check,
-        hadImages: !!(e.images && e.images.length > 0),
-      }));
-
-      const { data, error } = await supabase.functions.invoke("analyze", {
-        body: {
-          text: trimmed,
-          mode,
-          images: hasImages ? images : undefined,
-          personName: thread.name,
-          priorEntries,
-        },
+      const priorEntries = buildPriorEntries(thread.entries);
+      const res = await invokeAnalyze({
+        text: trimmed,
+        mode,
+        images: hasImages ? images : undefined,
+        personName: thread.name,
+        priorEntries,
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const res = data as AnalysisResult;
       if (res?.language) setStoredLang(res.language);
 
       const imagesToSave = hasImages ? images : undefined;
