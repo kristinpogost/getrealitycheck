@@ -375,7 +375,6 @@ function normalizeResult(raw: any, languageHint: string, details?: string): Anal
     if_nothing_changes: safeString(raw?.if_nothing_changes, fallbackResult(language, details).if_nothing_changes),
     action: safeString(raw?.action, fallbackResult(language, details).action, 160),
     pattern_over_time: safeString(raw?.pattern_over_time, fallbackResult(language, details).pattern_over_time),
-    whats_changing: safeString(raw?.whats_changing, fallbackResult(language, details).whats_changing),
     trend: safeTrend(raw?.trend),
     ui_labels: {
       ...fallbackResult(language, details).ui_labels,
