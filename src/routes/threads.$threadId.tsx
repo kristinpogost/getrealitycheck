@@ -4,8 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
-  Loader2, Sparkles, Trash2, ImagePlus, X, MessageSquare, FileText,
-  ArrowLeft, Pencil, Check, RefreshCw, ChevronDown, Clock,
+  Loader2,
+  Sparkles,
+  Trash2,
+  ImagePlus,
+  X,
+  MessageSquare,
+  FileText,
+  ArrowLeft,
+  Pencil,
+  Check,
+  RefreshCw,
+  ChevronDown,
+  Clock,
 } from "lucide-react";
 import { ResultCards, type AnalysisResult } from "@/components/ResultCards";
 import { FlagBadge } from "@/components/FlagBadge";
@@ -13,9 +24,7 @@ import { TrendBadge } from "@/components/TrendBadge";
 import { ScreenshotGallery } from "@/components/ScreenshotGallery";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { latestEntry, type PersonThread, type ThreadEntry, type Mode } from "@/lib/threads";
-import {
-  fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb, deleteEntryDb,
-} from "@/lib/db";
+import { fetchThreads, addEntryDb, deletePersonDb, renamePersonDb, updateEntryDb, deleteEntryDb } from "@/lib/db";
 import { useUi, setStoredLang } from "@/lib/ui-i18n";
 
 export const Route = createFileRoute("/threads/$threadId")({
@@ -55,9 +64,7 @@ function CollapsibleText({ text, UI }: { text: string; UI: ReturnType<typeof use
   const [open, setOpen] = useState(false);
   const long = text.length > COLLAPSE_CHAR_THRESHOLD;
   if (!long) {
-    return (
-      <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">{text}</p>
-    );
+    return <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed">{text}</p>;
   }
   return (
     <div className="relative">
@@ -69,10 +76,8 @@ function CollapsibleText({ text, UI }: { text: string; UI: ReturnType<typeof use
           open
             ? undefined
             : {
-                WebkitMaskImage:
-                  "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
-                maskImage:
-                  "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+                maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
               }
         }
       >
@@ -85,9 +90,7 @@ function CollapsibleText({ text, UI }: { text: string; UI: ReturnType<typeof use
           className="group inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         >
           {open ? UI.showLess : UI.showMore}
-          <ChevronDown
-            className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-          />
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
         </button>
       </div>
     </div>
@@ -96,12 +99,17 @@ function CollapsibleText({ text, UI }: { text: string; UI: ReturnType<typeof use
 
 function formatTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 function formatDay(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, {
-    month: "short", day: "numeric", year: "numeric",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 function fileToDataUrl(file: File): Promise<string> {
@@ -136,9 +144,7 @@ function buildPriorEntries(
       const result = entry.result;
       const isRecent = index >= filtered.length - ANALYZE_RECENT_DETAIL;
       const memory = compactForAnalyze(
-        [result.communication_dynamic, result.pattern_over_time, result.reality_check]
-          .filter(Boolean)
-          .join(" "),
+        [result.communication_dynamic, result.pattern_over_time, result.reality_check].filter(Boolean).join(" "),
         isRecent ? 180 : 110,
       );
 
@@ -246,7 +252,9 @@ function ThreadPage() {
         setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, threadId]);
 
   const goBack = () => navigate({ to: "/" });
@@ -277,11 +285,11 @@ function ThreadPage() {
   };
 
   const onEntryAdded = (entry: ThreadEntry) => {
-    setThread((t) => t ? { ...t, updatedAt: entry.createdAt, entries: [...t.entries, entry] } : t);
+    setThread((t) => (t ? { ...t, updatedAt: entry.createdAt, entries: [...t.entries, entry] } : t));
   };
 
   const onEntryUpdated = (entry: ThreadEntry) => {
-    setThread((t) => t ? { ...t, entries: t.entries.map((e) => e.id === entry.id ? entry : e) } : t);
+    setThread((t) => (t ? { ...t, entries: t.entries.map((e) => (e.id === entry.id ? entry : e)) } : t));
   };
 
   const onEntryDeleted = async (entryId: string) => {
@@ -312,7 +320,10 @@ function ThreadPage() {
     return (
       <div className="min-h-screen px-4 py-14">
         <div className="mx-auto w-full max-w-2xl rounded-2xl border border-border/60 bg-card/70 p-6 text-center text-muted-foreground">
-          {UI.threadNotFound} <Link to="/" className="text-primary underline">{UI.goBack}</Link>
+          {UI.threadNotFound}{" "}
+          <Link to="/" className="text-primary underline">
+            {UI.goBack}
+          </Link>
         </div>
       </div>
     );
@@ -338,7 +349,14 @@ function ThreadPage() {
 }
 
 function ThreadView({
-  thread, userId, onEntryAdded, onEntryUpdated, onEntryDeleted, onBack, onDelete, onRename,
+  thread,
+  userId,
+  onEntryAdded,
+  onEntryUpdated,
+  onEntryDeleted,
+  onBack,
+  onDelete,
+  onRename,
 }: {
   thread: PersonThread;
   userId: string;
@@ -352,7 +370,9 @@ function ThreadView({
   const UI = useUi();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(thread.name);
-  useEffect(() => { setDraftName(thread.name); }, [thread.name, thread.id]);
+  useEffect(() => {
+    setDraftName(thread.name);
+  }, [thread.name, thread.id]);
 
   const commitRename = () => {
     const trimmed = draftName.trim();
@@ -392,7 +412,9 @@ function ThreadView({
       <div className="mb-6 rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card/90 to-accent/20 p-6 backdrop-blur-sm shadow-sm">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <div className="text-[0.7rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">{UI.threadStart}</div>
+            <div className="text-[0.7rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {UI.threadStart}
+            </div>
             {editing ? (
               <div className="mt-1 flex items-center gap-2">
                 <input
@@ -401,7 +423,10 @@ function ThreadView({
                   onChange={(e) => setDraftName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") commitRename();
-                    else if (e.key === "Escape") { setDraftName(thread.name); setEditing(false); }
+                    else if (e.key === "Escape") {
+                      setDraftName(thread.name);
+                      setEditing(false);
+                    }
                   }}
                   onBlur={commitRename}
                   maxLength={120}
@@ -429,7 +454,8 @@ function ThreadView({
               </div>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
-              {formatDay(thread.createdAt)} · {thread.entries.length} {thread.entries.length === 1 ? UI.entry : UI.entries}
+              {formatDay(thread.createdAt)} · {thread.entries.length}{" "}
+              {thread.entries.length === 1 ? UI.entry : UI.entries}
             </p>
           </div>
           {trend && (
@@ -442,12 +468,7 @@ function ThreadView({
       </div>
 
       <div className="mb-8">
-        <Composer
-          thread={thread}
-          userId={userId}
-          onSubmitted={onEntryAdded}
-          continueMode={thread.entries.length > 0}
-        />
+        <Composer thread={thread} userId={userId} onSubmitted={onEntryAdded} continueMode={thread.entries.length > 0} />
       </div>
 
       <div className="space-y-6">
@@ -489,7 +510,13 @@ function ThreadView({
 
 /* ---------- Timeline entry ---------- */
 function TimelineEntry({
-  entry, index, thread, onUpdated, onDeleted, reflectionRef, forceReflectionOpen,
+  entry,
+  index,
+  thread,
+  onUpdated,
+  onDeleted,
+  reflectionRef,
+  forceReflectionOpen,
 }: {
   entry: ThreadEntry;
   index: number;
@@ -507,8 +534,12 @@ function TimelineEntry({
   const [busy, setBusy] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setDraft(entry.userInput); }, [entry.userInput, entry.id]);
-  useEffect(() => { setDraftImages(entry.images ?? []); }, [entry.images, entry.id]);
+  useEffect(() => {
+    setDraft(entry.userInput);
+  }, [entry.userInput, entry.id]);
+  useEffect(() => {
+    setDraftImages(entry.images ?? []);
+  }, [entry.images, entry.id]);
 
   const addEditFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
@@ -518,17 +549,20 @@ function TimelineEntry({
         toast.error(`${f.name}: ${UI.imageTooLarge}`);
         continue;
       }
-      try { next.push(await fileToDataUrl(f)); } catch {}
+      try {
+        next.push(await fileToDataUrl(f));
+      } catch {}
     }
-    if (next.length) setDraftImages((prev) => {
-      const room = MAX_SCREENSHOTS - prev.length;
-      if (room <= 0) {
-        toast.error(UI.imageLimitReached);
-        return prev;
-      }
-      if (next.length > room) toast.message(UI.imageLimitTrimmed);
-      return [...prev, ...next.slice(0, room)];
-    });
+    if (next.length)
+      setDraftImages((prev) => {
+        const room = MAX_SCREENSHOTS - prev.length;
+        if (room <= 0) {
+          toast.error(UI.imageLimitReached);
+          return prev;
+        }
+        if (next.length > room) toast.message(UI.imageLimitTrimmed);
+        return [...prev, ...next.slice(0, room)];
+      });
   };
 
   // Paste support while editing
@@ -553,8 +587,7 @@ function TimelineEntry({
     return () => window.removeEventListener("paste", onPaste);
   }, [isEditing]);
 
-  const removeDraftImage = (i: number) =>
-    setDraftImages((prev) => prev.filter((_, idx) => idx !== i));
+  const removeDraftImage = (i: number) => setDraftImages((prev) => prev.filter((_, idx) => idx !== i));
 
   const cancelEdit = () => {
     setDraft(entry.userInput);
@@ -638,7 +671,9 @@ function TimelineEntry({
       <div className="flex justify-end">
         <div className="max-w-[88%] w-full">
           <div className="mb-1.5 flex items-center justify-end gap-2 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            <span>{UI.yourEntry} · {entry.mode === "message" ? UI.modeMessage : UI.modeSituation}</span>
+            <span>
+              {UI.yourEntry} · {entry.mode === "message" ? UI.modeMessage : UI.modeSituation}
+            </span>
             {!isEditing && (
               <>
                 <button
@@ -650,7 +685,9 @@ function TimelineEntry({
                 </button>
                 {onDeleted && (
                   <button
-                    onClick={() => { void onDeleted(entry.id); }}
+                    onClick={() => {
+                      void onDeleted(entry.id);
+                    }}
                     className="inline-flex cursor-pointer items-center rounded-full p-1 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition"
                     aria-label={UI.deleteEntry}
                     title={UI.deleteEntry}
@@ -675,11 +712,17 @@ function TimelineEntry({
                 {draftImages.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {draftImages.map((src, i) => (
-                      <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted">
+                      <div
+                        key={i}
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted"
+                      >
                         <img src={src} alt="" className="h-full w-full object-cover" />
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); removeDraftImage(i); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeDraftImage(i);
+                          }}
                           className="absolute right-1 top-1 rounded-full bg-background/85 p-0.5 text-foreground hover:bg-destructive hover:text-destructive-foreground"
                           aria-label="Remove image"
                         >
@@ -691,7 +734,10 @@ function TimelineEntry({
                 )}
 
                 <div
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
                   onDragLeave={() => setDragOver(false)}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -725,14 +771,19 @@ function TimelineEntry({
 
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[0.65rem] text-muted-foreground">
-                    {draft.length}/4000{draftImages.length > 0 ? ` · ${draftImages.length} ${draftImages.length === 1 ? UI.image : UI.images}` : ""}
+                    {draft.length}/4000
+                    {draftImages.length > 0
+                      ? ` · ${draftImages.length} ${draftImages.length === 1 ? UI.image : UI.images}`
+                      : ""}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={cancelEdit}
                       disabled={busy}
                       className="rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                    >{UI.cancel}</button>
+                    >
+                      {UI.cancel}
+                    </button>
                     <button
                       onClick={saveAndRegenerate}
                       disabled={busy}
@@ -746,9 +797,7 @@ function TimelineEntry({
               </div>
             ) : (
               <>
-                {entry.userInput && (
-                  <CollapsibleText text={entry.userInput} UI={UI} />
-                )}
+                {entry.userInput && <CollapsibleText text={entry.userInput} UI={UI} />}
                 {entry.images && entry.images.length > 0 && (
                   <div className={entry.userInput ? "mt-3" : ""}>
                     <ScreenshotGallery images={entry.images} thumbHeight={160} />
@@ -778,7 +827,11 @@ function TimelineEntry({
 
 /* ---------- Reflection card (compact → expanded) ---------- */
 function ReflectionCard({
-  entry, busy, onRegenerate, reflectionRef, defaultOpen,
+  entry,
+  busy,
+  onRegenerate,
+  reflectionRef,
+  defaultOpen,
 }: {
   entry: ThreadEntry;
   busy: boolean;
@@ -823,8 +876,12 @@ function ReflectionCard({
           </button>
         </div>
 
-        <div className={`relative overflow-hidden rounded-3xl rounded-tl-md border bg-gradient-to-br ${tintWrap} backdrop-blur-sm shadow-[0_6px_28px_-18px_rgba(180,140,150,0.35)]`}>
-          <div className={`pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full blur-3xl opacity-70 ${glow}`} />
+        <div
+          className={`relative overflow-hidden rounded-3xl rounded-tl-md border bg-gradient-to-br ${tintWrap} backdrop-blur-sm shadow-[0_6px_28px_-18px_rgba(180,140,150,0.35)]`}
+        >
+          <div
+            className={`pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full blur-3xl opacity-70 ${glow}`}
+          />
 
           {/* Compact header — always visible */}
           <button
@@ -841,16 +898,14 @@ function ReflectionCard({
                     {r.pattern_tag}
                   </span>
                 </div>
-                <p className="font-display text-[1.05rem] leading-snug text-foreground/90">
-                  {r.summary}
-                </p>
+                <p className="font-display text-[1.05rem] leading-snug text-foreground/90">{r.summary}</p>
                 {r.reality_check && !open && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 italic">
-                    “{r.reality_check}”
-                  </p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 italic">“{r.reality_check}”</p>
                 )}
               </div>
-              <div className={`mt-1 shrink-0 rounded-full border border-border/50 bg-background/60 p-1.5 text-muted-foreground transition group-hover:text-foreground ${open ? "rotate-180" : ""}`}>
+              <div
+                className={`mt-1 shrink-0 rounded-full border border-border/50 bg-background/60 p-1.5 text-muted-foreground transition group-hover:text-foreground ${open ? "rotate-180" : ""}`}
+              >
                 <ChevronDown className="h-3.5 w-3.5" />
               </div>
             </div>
@@ -875,7 +930,9 @@ function ReflectionCard({
 
 /* ---------- Expanded reflection (no collapse) ---------- */
 function ExpandedReflection({
-  entry, busy, onRegenerate,
+  entry,
+  busy,
+  onRegenerate,
 }: {
   entry: ThreadEntry;
   busy: boolean;
@@ -913,8 +970,12 @@ function ExpandedReflection({
             {UI.regenerate}
           </button>
         </div>
-        <div className={`relative overflow-hidden rounded-3xl rounded-tl-md border bg-gradient-to-br ${tintWrap} backdrop-blur-sm shadow-[0_6px_28px_-18px_rgba(180,140,150,0.35)] p-5 sm:p-6`}>
-          <div className={`pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full blur-3xl opacity-70 ${glow}`} />
+        <div
+          className={`relative overflow-hidden rounded-3xl rounded-tl-md border bg-gradient-to-br ${tintWrap} backdrop-blur-sm shadow-[0_6px_28px_-18px_rgba(180,140,150,0.35)] p-5 sm:p-6`}
+        >
+          <div
+            className={`pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full blur-3xl opacity-70 ${glow}`}
+          />
           <div className="relative">
             <ResultCards result={entry.result} variant={entry.mode} />
           </div>
@@ -924,7 +985,10 @@ function ExpandedReflection({
   );
 }
 function Composer({
-  thread, userId, onSubmitted, continueMode,
+  thread,
+  userId,
+  onSubmitted,
+  continueMode,
 }: {
   thread: PersonThread;
   userId: string;
@@ -947,17 +1011,20 @@ function Composer({
         toast.error(`${f.name}: ${UI.imageTooLarge}`);
         continue;
       }
-      try { next.push(await fileToDataUrl(f)); } catch {}
+      try {
+        next.push(await fileToDataUrl(f));
+      } catch {}
     }
-    if (next.length) setImages((prev) => {
-      const room = MAX_SCREENSHOTS - prev.length;
-      if (room <= 0) {
-        toast.error(UI.imageLimitReached);
-        return prev;
-      }
-      if (next.length > room) toast.message(UI.imageLimitTrimmed);
-      return [...prev, ...next.slice(0, room)];
-    });
+    if (next.length)
+      setImages((prev) => {
+        const room = MAX_SCREENSHOTS - prev.length;
+        if (room <= 0) {
+          toast.error(UI.imageLimitReached);
+          return prev;
+        }
+        if (next.length > room) toast.message(UI.imageLimitTrimmed);
+        return [...prev, ...next.slice(0, room)];
+      });
   };
 
   useEffect(() => {
@@ -981,8 +1048,7 @@ function Composer({
     return () => window.removeEventListener("paste", onPaste);
   }, [mode]);
 
-  const removeImage = (i: number) =>
-    setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const removeImage = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
 
   const switchMode = (m: Mode) => {
     setMode(m);
@@ -1028,7 +1094,9 @@ function Composer({
 
   const placeholder = continueMode
     ? UI.placeholderContinue
-    : mode === "situation" ? UI.placeholderSituation : UI.placeholderMessage;
+    : mode === "situation"
+      ? UI.placeholderSituation
+      : UI.placeholderMessage;
 
   return (
     <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-card/90 via-card/85 to-accent/15 p-4 sm:p-5 backdrop-blur-sm shadow-[0_10px_40px_-16px_rgba(180,140,150,0.3)]">
@@ -1060,7 +1128,10 @@ function Composer({
       {mode === "message" && (
         <>
           <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => {
               e.preventDefault();
@@ -1093,11 +1164,17 @@ function Composer({
           {images.length > 0 && (
             <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
               {images.map((src, i) => (
-                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted">
+                <div
+                  key={i}
+                  className="group relative aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted"
+                >
                   <img src={src} alt="" className="h-full w-full object-cover" />
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeImage(i);
+                    }}
                     className="absolute right-1 top-1 rounded-full bg-background/85 p-0.5 text-foreground hover:bg-destructive hover:text-destructive-foreground"
                     aria-label="Remove image"
                   >
@@ -1127,7 +1204,8 @@ function Composer({
 
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">
-          {text.length}/4000{images.length > 0 ? ` · ${images.length} ${images.length === 1 ? UI.image : UI.images}` : ""}
+          {text.length}/4000
+          {images.length > 0 ? ` · ${images.length} ${images.length === 1 ? UI.image : UI.images}` : ""}
         </span>
         <button
           onClick={analyze}
@@ -1144,7 +1222,11 @@ function Composer({
 
 /* ---------- Memory card (compact preview → modal) ---------- */
 function MemoryCard({
-  entry, index, thread, onUpdated, onDeleted,
+  entry,
+  index,
+  thread,
+  onUpdated,
+  onDeleted,
 }: {
   entry: ThreadEntry;
   index: number;
@@ -1180,7 +1262,9 @@ function MemoryCard({
         onClick={() => setOpen(true)}
         className={`group relative block w-full cursor-pointer overflow-hidden rounded-3xl border bg-gradient-to-br ${tintWrap} text-left p-5 backdrop-blur-sm shadow-[0_4px_20px_-14px_rgba(180,140,150,0.3)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_32px_-16px_rgba(180,140,150,0.4)]`}
       >
-        <div className={`pointer-events-none absolute -top-12 -right-8 h-32 w-32 rounded-full blur-3xl opacity-60 ${glow}`} />
+        <div
+          className={`pointer-events-none absolute -top-12 -right-8 h-32 w-32 rounded-full blur-3xl opacity-60 ${glow}`}
+        />
         <div className="relative flex items-start gap-3">
           <div className="min-w-0 flex-1 space-y-2.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -1194,18 +1278,19 @@ function MemoryCard({
                 </span>
               )}
             </div>
-            <p className="font-display text-[1rem] leading-snug text-foreground/90 line-clamp-2">
-              {r.summary}
-            </p>
+            <p className="font-display text-[1rem] leading-snug text-foreground/90 line-clamp-3">{r.summary}</p>
             {teaser && (
               <p className="text-xs text-muted-foreground/90 line-clamp-1">
                 <span className="text-muted-foreground/60">{UI.yourEntry}: </span>
-                {teaser}{entry.userInput && entry.userInput.length > 110 ? "…" : ""}
+                {teaser}
+                {entry.userInput && entry.userInput.length > 110 ? "…" : ""}
               </p>
             )}
             <div className="flex items-center gap-2 text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground/80">
               <Clock className="h-2.5 w-2.5" />
-              <span>#{index + 1} · {formatTime(entry.createdAt)}</span>
+              <span>
+                #{index + 1} · {formatTime(entry.createdAt)}
+              </span>
             </div>
           </div>
         </div>
@@ -1218,12 +1303,18 @@ function MemoryCard({
               entry={entry}
               index={index}
               thread={thread}
-              onUpdated={(e) => { onUpdated(e); }}
-              onDeleted={onDeleted ? async (id) => {
-                const ok = await onDeleted(id);
-                if (ok !== false) setOpen(false);
-                return ok;
-              } : undefined}
+              onUpdated={(e) => {
+                onUpdated(e);
+              }}
+              onDeleted={
+                onDeleted
+                  ? async (id) => {
+                      const ok = await onDeleted(id);
+                      if (ok !== false) setOpen(false);
+                      return ok;
+                    }
+                  : undefined
+              }
               forceReflectionOpen
             />
           </div>
@@ -1232,4 +1323,3 @@ function MemoryCard({
     </>
   );
 }
-
