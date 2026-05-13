@@ -69,7 +69,6 @@ type AnalysisResult = {
   if_nothing_changes: string;
   action: string;
   pattern_over_time: string;
-  whats_changing: string;
   trend: "improving" | "declining" | "inconsistent" | "stable" | "new";
   ui_labels: {
     summary_title: string;
@@ -90,7 +89,6 @@ type AnalysisResult = {
     if_nothing_changes: string;
     action: string;
     pattern_over_time: string;
-    whats_changing: string;
   };
 };
 
