@@ -157,7 +157,60 @@ function normalize(code: string | null | undefined): UiLang {
 const HISTORY_KEY = "ui_lang_history";
 const MANUAL_KEY = "ui_lang_manual";
 const HISTORY_MAX = 5;
-const SWITCH_THRESHOLD = 2; // need this many recent consistent signals to switch
+// A single Estonian/English signal is enough — UI must follow the analysis
+// language immediately so labels never lag behind content.
+const SWITCH_THRESHOLD = 1;
+
+/**
+ * Static result-card labels.
+ * Used by ResultCards instead of trusting AI-generated `ui_labels`,
+ * so old entries and new entries always render with the correct locale,
+ * and internal schema keys are never leaked to the UI.
+ */
+export const RESULT_LABELS = {
+  en: {
+    summary_title: "Summary",
+    pattern_tag: "Pattern",
+    dynamic: "Dynamic",
+    hidden_signals: "Hidden signals",
+    intentions: "Intentions",
+    flag: "Flag",
+    flag_reasoning: "Why this flag",
+    signal_breakdown: "Signal breakdown",
+    initiative: "Initiative",
+    effort: "Effort",
+    consistency: "Consistency",
+    emotional_tone: "Emotional tone",
+    meaning: "What it might mean",
+    reflection: "Something to sit with",
+    reality_check: "Reality check",
+    if_nothing_changes: "Worth noticing",
+    action: "Next step",
+    pattern_over_time: "Pattern over time",
+  },
+  et: {
+    summary_title: "Lühikokkuvõte",
+    pattern_tag: "Mustri nimi",
+    dynamic: "Dünaamika",
+    hidden_signals: "Varjatud vihjed",
+    intentions: "Kavatsused",
+    flag: "Lipp",
+    flag_reasoning: "Miks see lipp",
+    signal_breakdown: "Signaalide jaotus",
+    initiative: "Algatus",
+    effort: "Panus",
+    consistency: "Järjepidevus",
+    emotional_tone: "Emotsionaalne toon",
+    meaning: "Mida see võib tähendada",
+    reflection: "Mõttekoht",
+    reality_check: "Reaalsuskontroll",
+    if_nothing_changes: "Oluline tähelepanek",
+    action: "Järgmine samm",
+    pattern_over_time: "Muster ajas",
+  },
+} as const;
+
+export type ResultLabels = typeof RESULT_LABELS["en"];
 
 function readHistory(): UiLang[] {
   try {
