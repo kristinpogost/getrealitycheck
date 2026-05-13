@@ -136,7 +136,12 @@ export function ResultCards({
   result: AnalysisResult;
   variant?: "situation" | "message";
 }) {
-  const l = result.ui_labels;
+  // Always render labels from the static client-side map keyed on the active
+  // UI language. Never derive section titles from AI-generated `ui_labels`
+  // or from internal schema field names — that previously caused English
+  // fallbacks (e.g. "SIGNAL BREAKDOWN") to leak into Estonian threads.
+  const lang = useUiLang();
+  const l: ResultLabels = RESULT_LABELS[lang];
   const bubble = variant === "message";
 
   return (
