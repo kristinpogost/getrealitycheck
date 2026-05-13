@@ -516,15 +516,18 @@ SECTION PURPOSES (each must add a NEW angle — no overlap, no restating events)
      • Explaining obvious facts already in the entry
      • AI-style "deep talk" / motivational quote energy ("Kõige ilusamad asjad…", "Päris tunded räägivad ise enda eest…")
      • Repeating analysis from dynamic / hidden_signals / intentions / meaning / if_nothing_changes
-   FORBIDDEN OPENER STRUCTURES (never start with these — too AI-formulaic):
-     • "On huvitav, kuidas…"
+   STRICTLY FORBIDDEN OPENERS (never start a Reality Check with any of these — they are generalized reflection templates, not observations):
      • "Mõnikord…"
-     • "Tihti inimesed…" / "Tihti…"
+     • "On huvitav, kuidas…" / "Huvitav on see, et…"
+     • "Tihti…" / "Tihti inimesed…"
+     • "Sageli…" / "Sageli juhtub…"
+     • "Vahel…"
      • "Elus…"
-     • "Sageli juhtub…" / "Sageli…"
+     • "Inimesed…"
      • "Kummaline, kuidas…"
      • "Tundub, et…"
-   Vary sentence openings naturally — start with the noun, the feeling, the dynamic itself; do not lean on formulaic openers.
+   NO REPEATED OPENER TEMPLATES. Every Reality Check must begin differently, use a different sentence rhythm, and avoid recurring structural patterns. Do NOT produce reusable quote-shaped content. Start with the specific noun, feeling, or dynamic itself — never with a generalized philosophical lead-in.
+   STRUCTURAL UNIQUENESS: If two Reality Checks inside the same thread feel structurally similar (same opener pattern, same rhythm, same shape), rewrite the newer one completely. The line must feel like a natural emotional observation emerging from THIS exact interaction, not a generated wisdom template.
    EVOLUTION ACROSS THE THREAD (critical): Reality Checks MUST evolve with the relationship. Compare against ALL previous reality_checks in the thread context. NEVER reuse the same emotional lesson, the same wording, the same philosophical idea, or a slightly rephrased version of an earlier one. If earlier entries explored comfort / emotional safety / growing interest, newer entries should naturally move into different territory — trust, vulnerability, emotional pacing, mutual effort, uncertainty, emotional rhythm, attachment patterns, emotional reciprocity, comfort with silence, consistency, emotional openness, or whatever new nuance THIS entry surfaces. Each Reality Check should reflect the current emotional stage, what has specifically changed, and the newest emotional nuance introduced in this entry.
    STYLE: short, memorable, emotionally true, slightly philosophical, human-sounding, context-inspired rather than generic. Calm and grounded, not dramatic.
    Good examples (each fits ONE specific kind of moment, no formulaic opener): "Usaldus kasvab tihti just nendes hetkedes, kus enam ei pea midagi tõestama." / "Vaikus kahe inimese vahel hakkab millalgi rääkima rohkem kui sõnad." / "Vastastikune pingutus on harva võrdselt jagatud — küsimus on pigem selles, kas mõlemad seda märkavad." / "Lähedus liigub sageli aeglasemalt kui ootused, ja see ei pruugi olla halb märk." / "Haavatavus tuleb harva korraga; see lekib hetkedes, mida ise ei plaanigi." Bad (banned openers or generic wisdom): "On huvitav, kuidas…", "Mõnikord on parem vaikida.", "Lähedus kasvab ajaga.", "Päris tunded räägivad ise enda eest."
