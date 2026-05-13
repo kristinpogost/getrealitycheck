@@ -188,18 +188,12 @@ export function ResultCards({
         <p className="leading-relaxed text-foreground/85">{result.hidden_signals}</p>
       </SoftCard>
 
-      {/* What's changing */}
-      {result.whats_changing && (
-        <MinimalSection label={l.whats_changing || "What's changing"}>
-          <p className="leading-relaxed text-foreground/85 font-light">
-            {result.whats_changing}
-          </p>
-        </MinimalSection>
-      )}
+      {/* "What's changing" section removed — overlaps with Dynamic, Hidden
+          signals, and Pattern over time. Those three carry the work now. */}
 
       {/* Pattern over time */}
       {result.pattern_over_time && (
-        <SoftCard label={l.pattern_over_time || "Pattern over time"} tint="cream" bubble={bubble}>
+        <SoftCard label={l.pattern_over_time} tint="cream" bubble={bubble}>
           <p className="leading-relaxed text-foreground/85">{result.pattern_over_time}</p>
         </SoftCard>
       )}
