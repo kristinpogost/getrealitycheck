@@ -210,7 +210,7 @@ export const RESULT_LABELS = {
   },
 } as const;
 
-export type ResultLabels = typeof RESULT_LABELS["en"];
+export type ResultLabels = { [K in keyof typeof RESULT_LABELS["en"]]: string };
 
 function readHistory(): UiLang[] {
   try {
