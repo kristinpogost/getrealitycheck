@@ -69,7 +69,6 @@ type AnalysisResult = {
   if_nothing_changes: string;
   action: string;
   pattern_over_time: string;
-  whats_changing: string;
   trend: "improving" | "declining" | "inconsistent" | "stable" | "new";
   ui_labels: {
     summary_title: string;
@@ -90,7 +89,6 @@ type AnalysisResult = {
     if_nothing_changes: string;
     action: string;
     pattern_over_time: string;
-    whats_changing: string;
   };
 };
 
@@ -329,7 +327,6 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
     if_nothing_changes: et ? "Kui sama juhtub uuesti, tasub proovida väiksema sisendiga." : "If this happens again, it is worth retrying with a smaller input.",
     action: et ? "Proovi uuesti" : "Try again",
     pattern_over_time: et ? "Varasem muster jäi seekord osaliselt töötlemata." : "The longer pattern could only be processed partially this time.",
-    whats_changing: et ? "Seekord muutus pigem analüüsi stabiilsus kui suhte tõlgendus." : "What changed here is the analysis stability, not necessarily the relationship reading.",
     trend: "new",
     ui_labels: {
       summary_title: et ? "Lühikokkuvõte" : "Summary",
@@ -350,7 +347,6 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
       if_nothing_changes: et ? "Oluline tähelepanek" : "Worth noticing",
       action: et ? "Järgmine samm" : "Action",
       pattern_over_time: et ? "Muster ajas" : "Pattern over time",
-      whats_changing: et ? "Mis muutub" : "What's changing",
     },
   };
 }
@@ -379,7 +375,6 @@ function normalizeResult(raw: any, languageHint: string, details?: string): Anal
     if_nothing_changes: safeString(raw?.if_nothing_changes, fallbackResult(language, details).if_nothing_changes),
     action: safeString(raw?.action, fallbackResult(language, details).action, 160),
     pattern_over_time: safeString(raw?.pattern_over_time, fallbackResult(language, details).pattern_over_time),
-    whats_changing: safeString(raw?.whats_changing, fallbackResult(language, details).whats_changing),
     trend: safeTrend(raw?.trend),
     ui_labels: {
       ...fallbackResult(language, details).ui_labels,
@@ -453,9 +448,8 @@ Return ONLY valid JSON with this exact shape (no markdown, no code fences, no co
   "if_nothing_changes": string,
   "action": string,
   "pattern_over_time": string,
-  "whats_changing": string,
   "trend": "improving" | "declining" | "inconsistent" | "stable" | "new",
-  "ui_labels": { "summary_title": string, "pattern_tag": string, "dynamic": string, "hidden_signals": string, "intentions": string, "flag": string, "flag_reasoning": string, "signal_breakdown": string, "initiative": string, "effort": string, "consistency": string, "emotional_tone": string, "meaning": string, "reflection": string, "reality_check": string, "if_nothing_changes": string, "action": string, "pattern_over_time": string, "whats_changing": string }
+  "ui_labels": { "summary_title": string, "pattern_tag": string, "dynamic": string, "hidden_signals": string, "intentions": string, "flag": string, "flag_reasoning": string, "signal_breakdown": string, "initiative": string, "effort": string, "consistency": string, "emotional_tone": string, "meaning": string, "reflection": string, "reality_check": string, "if_nothing_changes": string, "action": string, "pattern_over_time": string }
 }
 
 LANGUAGE & VOICE
@@ -502,10 +496,10 @@ CORE PHILOSOPHY — PSYCHOLOGICAL OBSERVER, NOT ROMANCE PREDICTOR (CRITICAL)
 - Focus on: interaction patterns, emotional pacing, behavioral consistency, communication style, comfort levels, vulnerability, effort balance, subtle social meaning. Less "this may become a relationship", more "this interaction suggests growing comfort and emotional openness".
 
 SECTION PURPOSES (each must add a NEW angle — no overlap, no restating events)
-- communication_dynamic (Dünaamika): describe the ENERGY between the two people — conversational rhythm, balance, emotional pacing, comfort, who carries initiative, openness, tension vs ease. Do NOT summarize what was said. Good: "Vestluses liigub initsiatiiv mõlemat pidi ning kumbki ei näi kandvat kogu suhtluse raskust üksi." Bad: "Vestlus oli sujuv ja tore."
-- hidden_signals (Varjatud vihjed): the most important and unique section. Surface subtle emotional subtext, hidden social signals, behavioral implications, intimacy indicators, small details with disproportionate emotional weight (why a long conversation matters, why platform switching matters, why apologizing matters, why remembering details matters, why a moment of vulnerability shifts the tone). Deeply observant, never dramatic.
-- whats_changing: shifts compared to earlier entries in the thread (skip / keep brief if truly the first entry).
-- pattern_over_time: broader recurring dynamics across the thread; long-term consistency or instability.
+- communication_dynamic (Dünaamika): the ENERGY of the PRESENT interaction — conversational rhythm, balance, emotional pacing, comfort, who carries initiative, openness, tension vs ease, where the energy sits right now. Strictly about the current entry's interaction quality, not progression. Do NOT summarize what was said. Do NOT describe how the relationship has evolved (that belongs to pattern_over_time). Good: "Vestluses liigub initsiatiiv mõlemat pidi ning kumbki ei näi kandvat kogu suhtluse raskust üksi." Bad: "Vestlus oli sujuv ja tore." / "Side on muutunud avatumaks." (← that is progression, not present energy).
+- hidden_signals (Varjatud vihjed): the most important and unique section. Subtle psychological and social subtext that is NOT explicit — what behaviour quietly signals, why small details matter disproportionately (why a long conversation matters, why platform switching matters, why apologizing matters, why remembering details matters, why a moment of vulnerability shifts the tone, what an unusual silence implies, what a sudden rhythm change reveals about comfort or hesitation). Deeply observant, psychologically intelligent, never dramatic, never a re-summary, never the same content as dynamic or pattern_over_time.
+- pattern_over_time: PROGRESSION and recurring behavioural patterns across the WHOLE thread — how things have shifted entry by entry, which behaviours repeat, what is consistent or unstable over time. This is the ONLY section that talks about evolution / change / "what is shifting". If this is the first entry in the thread, keep this short and frame it as a starting baseline rather than inventing change. Do NOT restate present-moment energy (that is dynamic).
+- NEVER produce a separate "what's changing" section. Progression lives ONLY in pattern_over_time. dynamic stays in the present, hidden_signals stays in subtext.
 - intentions (Võimalikud kavatsused): interpret what the person's BEHAVIOR practically suggests — effort, intention, consistency, comfort, emotional investment, social behavior. Do NOT predict romance or label what they "want". Good: "Ta otsib aktiivselt põhjuseid suhtlust jätkata ka väljaspool algset konteksti." / "Tema käitumine viitab soovile hoida ühendust järjepidevalt ja loomulikult." / "Ta ei hoia vestlust ainult viisakuse tasemel, vaid liigub teadlikult isiklikumate teemade poole." Banned: "ta tahab suhet", "ta näeb sinus partnerit".
 - meaning (Mida see võib tähendada): interpret the emotional MEANING of the dynamic for the user — psychological insight, emotional interpretation. NOT relationship forecasting, NOT a re-summary. Good: "Selline aeglane ja loomulik areng võib mõjuda turvalisemalt kui väga kiire intensiivsus." / "Mugavus näib tekkivat läbi järjepideva suhtlemise, mitte ainult tugevate hetkede." Must NOT repeat ideas already stated in dynamic / hidden_signals / intentions.
 - if_nothing_changes (rendered as "Oluline tähelepanek" / "Tasub märgata"): ONE meaningful psychological or social observation that adds genuine value — a specific, overlooked nuance. Observant, not predictive. Good: "Tähelepanuväärne on see, et vestlus ei püsi ainult flirtival tasandil, vaid liigub loomulikult ka igapäevaelu ja haavatavamate teemade juurde." / "Kuigi suhtlus on mänguline, tundub selle all olevat ka päris soov teineteist mõista." / "Vestluse tempo ei tundu sunnitud, vaid kujuneb loomulikult mõlema panusest." Do NOT forecast. Do NOT repeat earlier sections.
@@ -553,7 +547,7 @@ LENGTH
 
 UI_LABELS — ESTONIAN ONLY (when language is Estonian)
 - ALL ui_labels MUST be in Estonian when the analysis is Estonian. Never mix English labels into an Estonian response.
-- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas", whats_changing="Mis muutub".
+- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas".
 - Forbidden labels in Estonian output: "Intentions", "Dynamics", "Hidden signals", "Reality check", "Breakdown", "Jaotus" (alone), "Võimalikud kavatsused", "Kui midagi ei muutu".
 
 ANTI-FANFICTION / ANTI-ROMANCE-INFLATION (CRITICAL)

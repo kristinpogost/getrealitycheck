@@ -1,5 +1,6 @@
 import { FlagBadge, type FlagKind } from "./FlagBadge";
 import { Sparkles, Send, Heart, Repeat, Smile, Clock } from "lucide-react";
+import { RESULT_LABELS, useUiLang, type ResultLabels } from "@/lib/ui-i18n";
 
 export type UiLabels = {
   summary_title: string;
@@ -135,7 +136,12 @@ export function ResultCards({
   result: AnalysisResult;
   variant?: "situation" | "message";
 }) {
-  const l = result.ui_labels;
+  // Always render labels from the static client-side map keyed on the active
+  // UI language. Never derive section titles from AI-generated `ui_labels`
+  // or from internal schema field names — that previously caused English
+  // fallbacks (e.g. "SIGNAL BREAKDOWN") to leak into Estonian threads.
+  const lang = useUiLang();
+  const l: ResultLabels = RESULT_LABELS[lang];
   const bubble = variant === "message";
 
   return (
@@ -182,18 +188,12 @@ export function ResultCards({
         <p className="leading-relaxed text-foreground/85">{result.hidden_signals}</p>
       </SoftCard>
 
-      {/* What's changing */}
-      {result.whats_changing && (
-        <MinimalSection label={l.whats_changing || "What's changing"}>
-          <p className="leading-relaxed text-foreground/85 font-light">
-            {result.whats_changing}
-          </p>
-        </MinimalSection>
-      )}
+      {/* "What's changing" section removed — overlaps with Dynamic, Hidden
+          signals, and Pattern over time. Those three carry the work now. */}
 
       {/* Pattern over time */}
       {result.pattern_over_time && (
-        <SoftCard label={l.pattern_over_time || "Pattern over time"} tint="cream" bubble={bubble}>
+        <SoftCard label={l.pattern_over_time} tint="cream" bubble={bubble}>
           <p className="leading-relaxed text-foreground/85">{result.pattern_over_time}</p>
         </SoftCard>
       )}
