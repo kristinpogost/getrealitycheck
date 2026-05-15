@@ -453,8 +453,9 @@ Return ONLY valid JSON with this exact shape (no markdown, no code fences, no co
   "if_nothing_changes": string,
   "action": string,
   "pattern_over_time": string,
+  "reading": string,
   "trend": "improving" | "declining" | "inconsistent" | "stable" | "new",
-  "ui_labels": { "summary_title": string, "pattern_tag": string, "dynamic": string, "hidden_signals": string, "intentions": string, "flag": string, "flag_reasoning": string, "signal_breakdown": string, "initiative": string, "effort": string, "consistency": string, "emotional_tone": string, "meaning": string, "reflection": string, "reality_check": string, "if_nothing_changes": string, "action": string, "pattern_over_time": string }
+  "ui_labels": { "summary_title": string, "pattern_tag": string, "dynamic": string, "hidden_signals": string, "intentions": string, "flag": string, "flag_reasoning": string, "signal_breakdown": string, "initiative": string, "effort": string, "consistency": string, "emotional_tone": string, "meaning": string, "reflection": string, "reality_check": string, "if_nothing_changes": string, "action": string, "pattern_over_time": string, "reading": string }
 }
 
 LANGUAGE & VOICE
