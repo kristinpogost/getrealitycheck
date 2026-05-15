@@ -90,6 +90,7 @@ type AnalysisResult = {
     if_nothing_changes: string;
     action: string;
     pattern_over_time: string;
+    reading: string;
   };
 };
 
