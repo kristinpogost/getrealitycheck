@@ -329,6 +329,7 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
     if_nothing_changes: et ? "Kui sama juhtub uuesti, tasub proovida väiksema sisendiga." : "If this happens again, it is worth retrying with a smaller input.",
     action: et ? "Proovi uuesti" : "Try again",
     pattern_over_time: et ? "Varasem muster jäi seekord osaliselt töötlemata." : "The longer pattern could only be processed partially this time.",
+    reading: et ? "Seekord ei õnnestunud terviklikku lugemist kokku panna. Proovi palun uuesti." : "A full reading could not be assembled this time. Please try again.",
     trend: "new",
     ui_labels: {
       summary_title: et ? "Lühikokkuvõte" : "Summary",
@@ -349,6 +350,7 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
       if_nothing_changes: et ? "Oluline tähelepanek" : "Worth noticing",
       action: et ? "Järgmine samm" : "Action",
       pattern_over_time: et ? "Muster ajas" : "Pattern over time",
+      reading: et ? "Lugemine" : "Reading",
     },
   };
 }
