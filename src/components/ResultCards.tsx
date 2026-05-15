@@ -51,6 +51,7 @@ export type AnalysisResult = {
   action: string;
   pattern_over_time?: string;
   whats_changing?: string;
+  reading?: string;
   trend?: Trend;
   ui_labels: UiLabels;
 };
