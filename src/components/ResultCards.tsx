@@ -22,6 +22,7 @@ export type UiLabels = {
   action: string;
   pattern_over_time?: string;
   whats_changing?: string;
+  reading?: string;
 };
 
 export type Trend = "improving" | "declining" | "inconsistent" | "stable" | "new";
