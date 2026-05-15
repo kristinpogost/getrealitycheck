@@ -187,6 +187,7 @@ export const RESULT_LABELS = {
     if_nothing_changes: "Worth noticing",
     action: "Next step",
     pattern_over_time: "Pattern over time",
+    reading: "Reading",
   },
   et: {
     summary_title: "Lühikokkuvõte",
@@ -207,6 +208,7 @@ export const RESULT_LABELS = {
     if_nothing_changes: "Oluline tähelepanek",
     action: "Järgmine samm",
     pattern_over_time: "Muster ajas",
+    reading: "Lugemine",
   },
 } as const;
 

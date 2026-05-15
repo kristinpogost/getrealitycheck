@@ -69,6 +69,7 @@ type AnalysisResult = {
   if_nothing_changes: string;
   action: string;
   pattern_over_time: string;
+  reading: string;
   trend: "improving" | "declining" | "inconsistent" | "stable" | "new";
   ui_labels: {
     summary_title: string;
@@ -89,6 +90,7 @@ type AnalysisResult = {
     if_nothing_changes: string;
     action: string;
     pattern_over_time: string;
+    reading: string;
   };
 };
 
@@ -327,6 +329,7 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
     if_nothing_changes: et ? "Kui sama juhtub uuesti, tasub proovida väiksema sisendiga." : "If this happens again, it is worth retrying with a smaller input.",
     action: et ? "Proovi uuesti" : "Try again",
     pattern_over_time: et ? "Varasem muster jäi seekord osaliselt töötlemata." : "The longer pattern could only be processed partially this time.",
+    reading: et ? "Seekord ei õnnestunud terviklikku lugemist kokku panna. Proovi palun uuesti." : "A full reading could not be assembled this time. Please try again.",
     trend: "new",
     ui_labels: {
       summary_title: et ? "Lühikokkuvõte" : "Summary",
@@ -347,6 +350,7 @@ function fallbackResult(language: string, details?: string): AnalysisResult {
       if_nothing_changes: et ? "Oluline tähelepanek" : "Worth noticing",
       action: et ? "Järgmine samm" : "Action",
       pattern_over_time: et ? "Muster ajas" : "Pattern over time",
+      reading: et ? "Lugemine" : "Reading",
     },
   };
 }
@@ -375,6 +379,7 @@ function normalizeResult(raw: any, languageHint: string, details?: string): Anal
     if_nothing_changes: safeString(raw?.if_nothing_changes, fallbackResult(language, details).if_nothing_changes),
     action: safeString(raw?.action, fallbackResult(language, details).action, 160),
     pattern_over_time: safeString(raw?.pattern_over_time, fallbackResult(language, details).pattern_over_time),
+    reading: safeString(raw?.reading, fallbackResult(language, details).reading, 1400),
     trend: safeTrend(raw?.trend),
     ui_labels: {
       ...fallbackResult(language, details).ui_labels,
@@ -448,8 +453,9 @@ Return ONLY valid JSON with this exact shape (no markdown, no code fences, no co
   "if_nothing_changes": string,
   "action": string,
   "pattern_over_time": string,
+  "reading": string,
   "trend": "improving" | "declining" | "inconsistent" | "stable" | "new",
-  "ui_labels": { "summary_title": string, "pattern_tag": string, "dynamic": string, "hidden_signals": string, "intentions": string, "flag": string, "flag_reasoning": string, "signal_breakdown": string, "initiative": string, "effort": string, "consistency": string, "emotional_tone": string, "meaning": string, "reflection": string, "reality_check": string, "if_nothing_changes": string, "action": string, "pattern_over_time": string }
+  "ui_labels": { "summary_title": string, "pattern_tag": string, "dynamic": string, "hidden_signals": string, "intentions": string, "flag": string, "flag_reasoning": string, "signal_breakdown": string, "initiative": string, "effort": string, "consistency": string, "emotional_tone": string, "meaning": string, "reflection": string, "reality_check": string, "if_nothing_changes": string, "action": string, "pattern_over_time": string, "reading": string }
 }
 
 LANGUAGE & VOICE
@@ -512,6 +518,7 @@ SECTION PURPOSES (each must add a NEW angle — no overlap, no restating events)
 - intentions (Võimalikud kavatsused): interpret what the person's BEHAVIOR practically suggests — effort, intention, consistency, comfort, emotional investment, social behavior. Do NOT predict romance or label what they "want". Good: "Ta otsib aktiivselt põhjuseid suhtlust jätkata ka väljaspool algset konteksti." / "Tema käitumine viitab soovile hoida ühendust järjepidevalt ja loomulikult." / "Ta ei hoia vestlust ainult viisakuse tasemel, vaid liigub teadlikult isiklikumate teemade poole." Banned: "ta tahab suhet", "ta näeb sinus partnerit".
 - meaning (Mida see võib tähendada): interpret the emotional MEANING of the dynamic for the user — psychological insight, emotional interpretation. NOT relationship forecasting, NOT a re-summary. Good: "Selline aeglane ja loomulik areng võib mõjuda turvalisemalt kui väga kiire intensiivsus." / "Mugavus näib tekkivat läbi järjepideva suhtlemise, mitte ainult tugevate hetkede." Must NOT repeat ideas already stated in dynamic / hidden_signals / intentions.
 - if_nothing_changes (rendered as "Oluline tähelepanek" / "Tasub märgata"): ONE meaningful psychological or social observation that adds genuine value — a specific, overlooked nuance. Observant, not predictive. Good: "Tähelepanuväärne on see, et vestlus ei püsi ainult flirtival tasandil, vaid liigub loomulikult ka igapäevaelu ja haavatavamate teemade juurde." / "Kuigi suhtlus on mänguline, tundub selle all olevat ka päris soov teineteist mõista." / "Vestluse tempo ei tundu sunnitud, vaid kujuneb loomulikult mõlema panusest." Do NOT forecast. Do NOT repeat earlier sections.
+- reading (Lugemine — THE PRIMARY USER-FACING NARRATIVE): a single, tightly written, psychologically sharp combined reading that REPLACES the separate dynamic / hidden_signals / pattern_over_time / intentions / meaning / if_nothing_changes blocks for the reader. 3 to 5 short sentences (max ~6), no headings, no bullet points, no labels. Each sentence must add a GENUINELY NEW insight — present-moment energy, then subtle subtext, then progression across the thread (only if meaningful), then what the behavior practically suggests, then one quietly sharp observation. NEVER restate the same idea twice in different wording. NEVER reuse phrases verbatim from the other six fields — synthesize, do not concatenate. Cut every filler sentence. Read like a perceptive friend's quiet take, not an AI essay. The other six fields above must still be produced for internal memory, but keep them tight and non-redundant — the UI will display ONLY `reading`.
 - reality_check: a short, emotionally intelligent reflection or quiet wisdom line INSPIRED by the current situation. MAX 1-2 short sentences. It MAY sound lightly philosophical, feel like a thoughtful life observation, carry emotional insight, or feel quietly poetic — but it must remain natural Estonian, emotionally grounded, subtle (never dramatic), and clearly connected to the emotional dynamic of THIS interaction. Should feel like a naturally phrased emotional realization a real person could pause and think about afterwards.
    HARD BANS — never produce these:
      • Therapist-style analysis or advice ("Oluline on iseennast kuulata.", "Anna endale aega.")
@@ -556,7 +563,7 @@ LENGTH
 
 UI_LABELS — ESTONIAN ONLY (when language is Estonian)
 - ALL ui_labels MUST be in Estonian when the analysis is Estonian. Never mix English labels into an Estonian response.
-- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas".
+- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas", reading="Lugemine".
 - Forbidden labels in Estonian output: "Intentions", "Dynamics", "Hidden signals", "Reality check", "Breakdown", "Jaotus" (alone), "Võimalikud kavatsused", "Kui midagi ei muutu".
 
 ANTI-FANFICTION / ANTI-ROMANCE-INFLATION (CRITICAL)

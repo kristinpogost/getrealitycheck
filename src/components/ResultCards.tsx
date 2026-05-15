@@ -22,6 +22,7 @@ export type UiLabels = {
   action: string;
   pattern_over_time?: string;
   whats_changing?: string;
+  reading?: string;
 };
 
 export type Trend = "improving" | "declining" | "inconsistent" | "stable" | "new";
@@ -51,6 +52,7 @@ export type AnalysisResult = {
   action: string;
   pattern_over_time?: string;
   whats_changing?: string;
+  reading?: string;
   trend?: Trend;
   ui_labels: UiLabels;
 };
@@ -176,51 +178,61 @@ export function ResultCards({
         </SoftCard>
       )}
 
-      {/* Communication dynamic */}
-      <MinimalSection label={l.dynamic}>
-        <p className="leading-relaxed text-[1.02rem] text-foreground/85 font-light">
-          {result.communication_dynamic}
-        </p>
-      </MinimalSection>
-
-      {/* Hidden signals */}
-      <SoftCard label={l.hidden_signals} tint="sage" bubble={bubble}>
-        <p className="leading-relaxed text-foreground/85">{result.hidden_signals}</p>
-      </SoftCard>
-
-      {/* "What's changing" section removed — overlaps with Dynamic, Hidden
-          signals, and Pattern over time. Those three carry the work now. */}
-
-      {/* Pattern over time */}
-      {result.pattern_over_time && (
-        <SoftCard label={l.pattern_over_time} tint="cream" bubble={bubble}>
-          <p className="leading-relaxed text-foreground/85">{result.pattern_over_time}</p>
-        </SoftCard>
-      )}
-
-      {/* Intentions */}
-      <MinimalSection label={l.intentions}>
-        <p className="leading-relaxed text-foreground/85 font-light">{result.intentions}</p>
-      </MinimalSection>
-
-      {/* Meaning */}
-      <SoftCard label={l.meaning} tint="cream" bubble={bubble}>
-        <p className="leading-relaxed text-foreground/85">{result.meaning}</p>
-      </SoftCard>
-
-      {/* If nothing changes */}
-      {result.if_nothing_changes && (
-        <div className="relative rounded-3xl border border-border/50 bg-gradient-to-br from-muted/40 via-card/80 to-card/70 p-6 sm:p-7 backdrop-blur-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[0.68rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              {l.if_nothing_changes || "If nothing changes"}
-            </span>
+      {/* Combined reading — replaces dynamic + hidden_signals + pattern_over_time
+          + intentions + meaning + if_nothing_changes for a tighter, less repetitive read.
+          Falls back to the legacy 6-section layout for older entries that pre-date `reading`. */}
+      {result.reading ? (
+        <SoftCard label={l.reading || "Reading"} tint="sage" bubble={bubble}>
+          <div className="space-y-3 leading-relaxed text-foreground/85">
+            {result.reading
+              .split(/\n+/)
+              .map((para, i) => para.trim())
+              .filter(Boolean)
+              .map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
           </div>
-          <p className="leading-relaxed text-foreground/85 font-light">
-            {result.if_nothing_changes}
-          </p>
-        </div>
+        </SoftCard>
+      ) : (
+        <>
+          <MinimalSection label={l.dynamic}>
+            <p className="leading-relaxed text-[1.02rem] text-foreground/85 font-light">
+              {result.communication_dynamic}
+            </p>
+          </MinimalSection>
+
+          <SoftCard label={l.hidden_signals} tint="sage" bubble={bubble}>
+            <p className="leading-relaxed text-foreground/85">{result.hidden_signals}</p>
+          </SoftCard>
+
+          {result.pattern_over_time && (
+            <SoftCard label={l.pattern_over_time} tint="cream" bubble={bubble}>
+              <p className="leading-relaxed text-foreground/85">{result.pattern_over_time}</p>
+            </SoftCard>
+          )}
+
+          <MinimalSection label={l.intentions}>
+            <p className="leading-relaxed text-foreground/85 font-light">{result.intentions}</p>
+          </MinimalSection>
+
+          <SoftCard label={l.meaning} tint="cream" bubble={bubble}>
+            <p className="leading-relaxed text-foreground/85">{result.meaning}</p>
+          </SoftCard>
+
+          {result.if_nothing_changes && (
+            <div className="relative rounded-3xl border border-border/50 bg-gradient-to-br from-muted/40 via-card/80 to-card/70 p-6 sm:p-7 backdrop-blur-sm">
+              <div className="mb-3 flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[0.68rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                  {l.if_nothing_changes || "If nothing changes"}
+                </span>
+              </div>
+              <p className="leading-relaxed text-foreground/85 font-light">
+                {result.if_nothing_changes}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {/* REALITY CHECK */}
