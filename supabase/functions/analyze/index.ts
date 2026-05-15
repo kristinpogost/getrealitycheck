@@ -563,7 +563,7 @@ LENGTH
 
 UI_LABELS — ESTONIAN ONLY (when language is Estonian)
 - ALL ui_labels MUST be in Estonian when the analysis is Estonian. Never mix English labels into an Estonian response.
-- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas".
+- Required Estonian labels (use EXACTLY these strings): summary_title="Lühikokkuvõte", pattern_tag="Mustri nimi", dynamic="Dünaamika", hidden_signals="Varjatud vihjed", intentions="Kavatsused", flag="Lipp", flag_reasoning="Miks see lipp", signal_breakdown="Signaalide jaotus" (NEVER shortened to "Jaotus"), initiative="Algatus", effort="Panus", consistency="Järjepidevus", emotional_tone="Emotsionaalne toon", meaning="Mida see võib tähendada", reflection="Mõttekoht", reality_check="Reaalsuskontroll", if_nothing_changes="Oluline tähelepanek", action="Järgmine samm", pattern_over_time="Muster ajas", reading="Lugemine".
 - Forbidden labels in Estonian output: "Intentions", "Dynamics", "Hidden signals", "Reality check", "Breakdown", "Jaotus" (alone), "Võimalikud kavatsused", "Kui midagi ei muutu".
 
 ANTI-FANFICTION / ANTI-ROMANCE-INFLATION (CRITICAL)
