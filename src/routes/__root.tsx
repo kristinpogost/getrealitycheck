@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { UTFooter } from "@/components/UTFooter";
 
 function NotFoundComponent() {
   return (
