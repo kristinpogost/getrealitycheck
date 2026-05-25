@@ -1,0 +1,7 @@
+# Reality Check
+
+> A quiet, minimal space to reflect on situations and conversations. Describe what's happening, get a nuanced breakdown with flags, signals, and reflection prompts — insights, not absolute truths.
+
+## Pages
+
+- [/](/): The main app — a soft UI for journaling interactions with people, receiving gentle analytical feedback, and tracking patterns over time.
