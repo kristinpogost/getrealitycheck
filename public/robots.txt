@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://getrealitycheck.lovable.app/sitemap.xml
